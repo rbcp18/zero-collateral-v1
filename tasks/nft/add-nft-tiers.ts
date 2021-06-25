@@ -1,3 +1,4 @@
+import colors from 'colors'
 import * as ethers from 'ethers'
 import { task } from 'hardhat/config'
 import { HardhatRuntimeEnvironment } from 'hardhat/types'
@@ -5,9 +6,7 @@ import { HardhatRuntimeEnvironment } from 'hardhat/types'
 import { getNFT } from '../../config'
 import { ITellerNFT, TellerNFT } from '../../types/typechain'
 import { TellerNFTDictionary } from '../../types/typechain/TellerNFTDictionary'
-
 import { NULL_ADDRESS } from '../../utils/consts'
-import colors from 'colors'
 
 interface AddTiersArgs {
   sendTx?: boolean
@@ -76,14 +75,16 @@ export const addTiers = async (
     log(`${'already'.yellow} set.`)
   } else {
     // iterate through all tokens to get their tierIndex  (run a task)
-    const promise = new Promise<string[]>(async (resolve) => {
-      const claimedNFTData = await getAllTellerNFTTierData(hre)
+    const promise = new Promise<string[]>((resolve) => {
+      void (async () => {
+        const claimedNFTData = await getAllTellerNFTTierData(hre)
 
-      const compressedTierData =
-        compressTokenTierMappingsFromArray(claimedNFTData)
-      resolve(compressedTierData)
+        const compressedTierData =
+          compressTokenTierMappingsFromArray(claimedNFTData)
+        resolve(compressedTierData)
+      })()
     })
-    const intervalID = setInterval(async () => log('.', { nl: false }), 5000)
+    const intervalID = setInterval(() => log('.', { nl: false }), 5000)
     const compressedTierData = await promise
     if (compressedTierData == null) {
       throw new Error('Failed to compress token tier data')
@@ -96,25 +97,25 @@ export const addTiers = async (
 
     clearInterval(intervalID)
 
-    log(` set with ${colors.cyan(`${receipt!.gasUsed} gas`)}`)
+    log(` set with ${colors.cyan(`${receipt.gasUsed} gas`)}`)
   }
 }
 
 const compressTokenTierMappingsFromArray = (
-  tokenTiers: Array<ethers.BigNumber>
-): Array<string> => {
-  let tokenTierMappingCompressed = []
+  tokenTiers: ethers.BigNumber[]
+): string[] => {
+  const tokenTierMappingCompressed = []
 
-  let tokenTierMappingLengthMax = tokenTiers.length / 32
+  const tokenTierMappingLengthMax = tokenTiers.length / 32
 
   for (let i = 0; i < tokenTierMappingLengthMax; i++) {
     let newRow = '0x'
 
     for (let j = 0; j < 32; j++) {
-      let tokenId = i * 32 + j
+      const tokenId = i * 32 + j
 
       if (tokenId < tokenTiers.length) {
-        let tierLevelHexBytes = tokenTiers[tokenId].toHexString().substr(2)
+        const tierLevelHexBytes = tokenTiers[tokenId].toHexString().substr(2)
         // console.log('tier level hex bytes', tierLevelHexBytes.padStart(2, '0'))
         newRow += tierLevelHexBytes.padStart(2, '0')
       } else {
@@ -130,12 +131,12 @@ const compressTokenTierMappingsFromArray = (
 
 export const getAllTellerNFTTierData = async (
   hre: HardhatRuntimeEnvironment
-): Promise<Array<ethers.BigNumber>> => {
+): Promise<ethers.BigNumber[]> => {
   const { contracts, ethers, toBN } = hre
 
   const nft = await contracts.get<TellerNFT>('TellerNFT')
 
-  const info: Array<ethers.BigNumber> = []
+  const info: ethers.BigNumber[] = []
   try {
     let nftID = ethers.BigNumber.from(0)
     while (await nft.ownerOf(nftID)) {

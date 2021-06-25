@@ -4,6 +4,7 @@
     "standard-kit/prettier/typescript",
     "standard-kit/prettier/node"
   ],
+  "ignorePatterns": ["artifacts/**", "cache/**", "docs/**", "types/**", ""],
   "parserOptions": {
     "project": "tsconfig.json"
   },
@@ -18,17 +19,20 @@
         "argsIgnorePattern": "^_"
       }
     ],
-    "@typescript-eslint/promise-function-async": "off",
-    "@typescript-eslint/restrict-template-expressions": "off",
-    "@typescript-eslint/strict-boolean-expressions": "off",
+    "@typescript-eslint/no-extraneous-class": "off",
     "@typescript-eslint/no-non-null-assertion": "warn",
     "@typescript-eslint/no-unused-expressions": "off",
+    "@typescript-eslint/promise-function-async": "off",
+    "@typescript-eslint/require-array-sort-compare": "off",
+    "@typescript-eslint/restrict-template-expressions": "off",
+    "@typescript-eslint/strict-boolean-expressions": "off",
     "arrow-parens": "error",
+    "no-extra-semi": "error",
     "no-unused-vars": "off",
     "no-useless-return": "off",
     "no-void": "off",
+    "prefer-arrow-callback": "error",
     "semi": ["error", "never"],
-    "no-extra-semi": "error",
     "simple-import-sort/imports": "error"
   }
 }

@@ -133,7 +133,7 @@ contract LoanDataFacet {
     /**
      * @notice it returns the total escrow tokens held by an escrow
      * @param loanID the identifier of the respective escrow's loan
-     * @return tokens_ the tokens held at the escrow loan 
+     * @return tokens_ the tokens held at the escrow loan
      */
     function getEscrowTokens(uint256 loanID)
         external

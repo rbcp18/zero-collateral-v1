@@ -69,7 +69,7 @@ library LibConsensus {
             ) >= PlatformSettingsLib.getRequiredSubmissionsPercentageValue(),
             "Teller: insufficient signer responses"
         );
-        
+
         _validateLoanRequest(
             request.request.borrower,
             request.request.requestNonce

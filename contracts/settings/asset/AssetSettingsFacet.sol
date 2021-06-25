@@ -66,7 +66,7 @@ contract AssetSettingsFacet is RolesMods {
     /**
      * @notice It creates an asset settings with the given parameters.
      * @param asset the address to create settings for
-     * @param requests the multiple settings to update the asset with 
+     * @param requests the multiple settings to update the asset with
      */
     function createAssetSetting(
         address asset,

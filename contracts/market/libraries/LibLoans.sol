@@ -33,7 +33,7 @@ library LibLoans {
     /**
      * @notice it returns the loan
      * @param loanID the ID of the respective loan
-     * @return l_ the loan 
+     * @return l_ the loan
      */
     function loan(uint256 loanID) internal view returns (Loan storage l_) {
         l_ = s().loans[loanID];
@@ -85,7 +85,7 @@ library LibLoans {
     {
         return amountBorrow.percent(uint16(getInterestRatio(loanID)));
     }
-    
+
     function getCollateralNeeded(uint256 loanID)
         internal
         view

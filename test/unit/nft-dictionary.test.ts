@@ -1,30 +1,32 @@
-const { expect } = require('chai')
+import { expect } from "chai"
+import { Signer } from "ethers"
+import { ethers } from "hardhat"
 
-const { ethers } = require('ethers')
+import { TellerNFTDictionary } from "../../types/typechain"
 
-var dictionaryContract: any
-var signerAccount: any
+let dictionaryContract: TellerNFTDictionary
+let signerAccount: Signer
 
-describe('TellerNFTDictionary', async function () {
-  it('Should deploy the dictionary', async function () {
+describe('TellerNFTDictionary', () => {
+  it('Should deploy the dictionary', async () => {
     const Dictionary = await ethers.getContractFactory('TellerNFTDictionary')
 
     signerAccount = Dictionary.signer
 
-    dictionaryContract = await Dictionary.deploy()
+    dictionaryContract = await Dictionary.deploy() as TellerNFTDictionary
 
     await dictionaryContract.deployed()
 
-    let type = await dictionaryContract.stakeableTokenType()
+    const type = await dictionaryContract.stakeableTokenType()
     expect(type).to.equal(
       '0x2213d707f04cdfd263a540394e2a26bbf3a63d6ad89a37f534d2ee35bdfe0d38'
     )
   })
 
-  it('Should add token tier mappings', async function () {
+  it('Should add token tier mappings', async () => {
     // setTokenTierMappingCompressed
 
-    let tokenTiers = [
+    const tokenTiers = [
       0, 12, 2, 6, 0, 3, 2, 1, 0, 3, 2, 1, 0, 3, 2, 1, 0, 3, 2, 1, 0, 3, 2, 1,
       0, 3, 2, 1, 0, 3, 2, 1, 0, 3, 2, 1, 0, 3, 2, 1, 0, 3, 2, 1, 0, 3, 2, 1, 0,
       3, 2, 1, 0, 3, 2, 1, 0, 3, 2, 1, 0, 3, 2, 1, 0, 3, 2, 1, 0, 3, 2, 1, 0, 3,
@@ -87,18 +89,18 @@ describe('TellerNFTDictionary', async function () {
       2, 1,
     ]
 
-    let tokenTierMappingCompressed = []
+    const tokenTierMappingCompressed = []
 
-    let tokenTierMappingLengthMax = tokenTiers.length / 32
+    const tokenTierMappingLengthMax = tokenTiers.length / 32
 
     for (let i = 0; i < tokenTierMappingLengthMax; i++) {
       let newRow = '0x'
 
       for (let j = 0; j < 32; j++) {
-        let tokenId = i * 32 + j
+        const tokenId = i * 32 + j
 
         if (tokenId < tokenTiers.length) {
-          let tierLevelHexBytes = tokenTiers[tokenId].toString(16)
+          const tierLevelHexBytes = tokenTiers[tokenId].toString(16)
 
           newRow += tierLevelHexBytes.padStart(2, '0')
         } else {
@@ -108,18 +110,10 @@ describe('TellerNFTDictionary', async function () {
 
       tokenTierMappingCompressed.push(newRow)
     }
-    console.log('tokenTierMappingCompressed', tokenTierMappingCompressed)
-
-    let gasEstimate =
-      await dictionaryContract.estimateGas.setAllTokenTierMappings(
-        tokenTierMappingCompressed,
-        { from: signerAccount.address }
-      )
-    console.log(' addTokenTierMapping gasEstimate', gasEstimate.toString())
 
     await dictionaryContract.setAllTokenTierMappings(
       tokenTierMappingCompressed,
-      { from: signerAccount.address }
+      { from: await signerAccount.getAddress() }
     )
 
     let tokenTierIndex = await dictionaryContract.getTokenTierIndex('1')
@@ -143,8 +137,8 @@ describe('TellerNFTDictionary', async function () {
     expect(tokenTierIndex).to.equal(11)
   })
 
-  it('Should add tier data', async function () {
-    let Tier0 = {
+  it('Should add tier data', async () => {
+    const Tier0 = {
       baseLoanSize: '2500000000000000000000',
       hashes: [
         'QmeL8KzMzHXgMUXWNEjTk5aWbWvHWqjmbpE8AjE47p366e',
@@ -187,7 +181,7 @@ describe('TellerNFTDictionary', async function () {
       contributionMultiplier: '150',
     }
 
-    let Tier1 = {
+    const Tier1 = {
       baseLoanSize: '12500000000000000000000',
       hashes: [
         'QmZwLzEXRj1AkUUnXRTzJ9gNmNpEYikK8CA2BF3iR6bRy7',
@@ -260,7 +254,7 @@ describe('TellerNFTDictionary', async function () {
       contributionMultiplier: '150',
     }
 
-    let Tier2 = {
+    const Tier2 = {
       baseLoanSize: '25000000000000000000000',
       hashes: [
         'QmNg9Y1U9GcvmhcuDgRqLYTV9buW3VkdcrgbDvGdQXZ451',
@@ -338,34 +332,30 @@ describe('TellerNFTDictionary', async function () {
       contributionMultiplier: '150',
     }
 
-    await dictionaryContract.setTier(0, Tier0, { from: signerAccount.address })
-    await dictionaryContract.setTier(1, Tier1, { from: signerAccount.address })
-    await dictionaryContract.setTier(2, Tier2, { from: signerAccount.address })
+    await dictionaryContract.setTier(0, Tier0, { from: await signerAccount.getAddress() })
+    await dictionaryContract.setTier(1, Tier1, { from: await signerAccount.getAddress() })
+    await dictionaryContract.setTier(2, Tier2, { from: await signerAccount.getAddress() })
 
-    let baseLoanSizeGasEstimate =
-      await dictionaryContract.estimateGas.tokenBaseLoanSize('0')
-    console.log('baseLoanSizeGasEstimate', baseLoanSizeGasEstimate.toString())
-
-    let baseLoanSize = await dictionaryContract.tokenBaseLoanSize('0')
+    const baseLoanSize = await dictionaryContract.tokenBaseLoanSize('0')
     expect(baseLoanSize).to.equal('2500000000000000000000')
 
-    let tokenURIHash = await dictionaryContract.tokenURIHash('0')
+    const tokenURIHash = await dictionaryContract.tokenURIHash('0')
     expect(tokenURIHash).to.equal(
       'QmeL8KzMzHXgMUXWNEjTk5aWbWvHWqjmbpE8AjE47p366e'
     )
 
-    let tokenContributionAsset =
+    const tokenContributionAsset =
       await dictionaryContract.tokenContributionAsset('0')
     expect(tokenContributionAsset).to.equal(
       '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE'
     )
 
-    let tokenContributionSize = await dictionaryContract.tokenContributionSize(
+    const tokenContributionSize = await dictionaryContract.tokenContributionSize(
       '0'
     )
     expect(tokenContributionSize).to.equal('1000000000000000000')
 
-    let tokenContributionMultiplier =
+    const tokenContributionMultiplier =
       await dictionaryContract.tokenContributionMultiplier('0')
     expect(tokenContributionMultiplier).to.equal('150')
   })

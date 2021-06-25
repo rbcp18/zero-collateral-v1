@@ -35,7 +35,7 @@ library NumbersLib {
 
     /**
      * @notice it returns the absolute number of a specified parameter
-     * @param self the number to be returned in it's absolute 
+     * @param self the number to be returned in it's absolute
      * @return the absolute number
      */
     function abs(int256 self) internal pure returns (uint256) {

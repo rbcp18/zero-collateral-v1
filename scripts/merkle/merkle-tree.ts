@@ -69,7 +69,7 @@ export default class MerkleTree {
     return bufferToHex(this.getRoot())
   }
 
-  getProof(el: Buffer) {
+  getProof(el: Buffer): Buffer[] {
     let idx = this.bufferElementPositionIndex[bufferToHex(el)]
 
     if (typeof idx !== 'number') {
