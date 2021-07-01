@@ -7,13 +7,13 @@ import {
     ReentryMods
 } from "../contexts2/access-control/reentry/ReentryMods.sol";
 import { RolesMods } from "../contexts2/access-control/roles/RolesMods.sol";
-import { AUTHORIZED } from "../shared/roles.sol";
+import { AUTHORIZED, ADMIN } from "../shared/roles.sol";
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 // Libraries
 import { LibLoans } from "./libraries/LibLoans.sol";
 import { LibCollateral } from "./libraries/LibCollateral.sol";
-import { LibConsensus } from "./libraries/LibConsensus.sol";
+import { MarketLib } from "./libraries/MarketLib.sol";
 import { LendingLib } from "../lending/libraries/LendingLib.sol";
 import {
     PlatformSettingsLib
@@ -30,6 +30,10 @@ import {
 } from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import { NumbersLib } from "../shared/libraries/NumbersLib.sol";
 import { NFTLib } from "../nft/libraries/NFTLib.sol";
+import { Verifier } from "./cra/verifier.sol";
+import { ECDSA } from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import { MarketLib } from "./libraries/MarketLib.sol";
+import { ProcessRequestLib } from "./cra/ProcessRequestLib.sol";
 
 // Interfaces
 import { ILoansEscrow } from "../escrow/escrow/ILoansEscrow.sol";
@@ -47,9 +51,14 @@ import {
     LoanStatus,
     LoanTerms,
     Loan,
-    MarketStorageLib
+    MarketStorageLib,
+    Signature,
+    DataProviderSignature
 } from "../storage/market.sol";
 import { AppStorageLib } from "../storage/app.sol";
+
+// hardhat helpers
+import "hardhat/console.sol";
 
 contract CreateLoanFacet is RolesMods, ReentryMods, PausableMods {
     /**
@@ -78,6 +87,26 @@ contract CreateLoanFacet is RolesMods, ReentryMods, PausableMods {
         loan.status = LoanStatus.Active;
         loan.loanStartTime = uint32(block.timestamp);
         loan.duration = request.request.duration;
+    }
+
+    // used for testing our zkcra function
+    function initializeMarketAdmins() external authorized(ADMIN, msg.sender) {
+        // setting market admin
+        // MarketLib.m(bytes32(0)).admin[msg.sender] = true;
+        // // setting providers admin
+        // MarketLib.p(bytes32(0)).admin[msg.sender] = true;
+        // MarketLib.p(bytes32(uint256(1))).admin[msg.sender] = true;
+        // MarketLib.p(bytes32(uint256(2))).admin[msg.sender] = true;
+    }
+
+    function setProviderInformation(
+        bytes32 providerId,
+        uint32 maxAge,
+        address signer,
+        bool signerValue
+    ) external {
+        // MarketLib.setProviderSigner(providerId, signer, signerValue);
+        // MarketLib.setProviderMaxAge(providerId, maxAge);
     }
 
     /**
@@ -208,9 +237,10 @@ library CreateLoanLib {
             "Teller: max loan duration exceeded"
         );
 
+        // address of processRequestLib: 0xe7168c514A022345ed07E4Fad73eC3921C2b7bDb
         // Get consensus values from request
         (uint16 interestRate, uint16 collateralRatio, uint256 maxLoanAmount) =
-            LibConsensus.processLoanTerms(request);
+            ProcessRequestLib.processMarketRequest(request);
 
         // Perform loan value checks
         require(

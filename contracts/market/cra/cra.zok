@@ -1,0 +1,37 @@
+import "hashes/sha256/256bitPadded.zok" as sha256
+
+/*
+    Zero-Knowledge CRA. Each market configures up to 4 data providers used to
+    create their market score. Markets also configure the weight of each value
+    given for the user by the data provider. Each data provider gives the user
+    a score between 0 and 4,294,967,295 along with a secret. These two are
+    combined to create a commitment, which is also signed by the data provider
+    and verified on-chain.
+
+    @param private u32[4][8] data - Array of 4 uint256's. The first 32 bits of
+    each value represents the user's score given by a specific data provider.
+    The last 224 bits represent a secret value used to create a commitment hash.
+    Data providers sign the value sha256(value, secret) ^ timestamp, and that
+    signature is verified on-chain.
+
+    @param public field identifier - user address ^ user borrow nonce. This
+    param is used to prevent replaying proofs on-chain.
+
+    @param public u32[4] weights - Array of 4 uint32's. Each value represents
+    a weight given by the market for the data provider at that index. If
+    data[i][0] (value) == 10 and weights[i] == 5, then market score += 50.
+
+    @return field MARKET_SCORE - uint256 accumulated markets score.
+    @return u32[4][8] commitments - Array of the 4 commitments.
+*/
+def main(private u32[3][8] data, public field identifier) -> (u32, u32[3][8]):
+    u32[3][8] commitments = data
+    u32 MARKET_SCORE = 0
+    u32 MASK = 0x0000000a
+
+    for u32 i in 0..3 do
+        MARKET_SCORE = MARKET_SCORE + data[i][0] & MASK
+        commitments[i] = sha256(data[i])
+    endfor
+
+    return MARKET_SCORE,commitments

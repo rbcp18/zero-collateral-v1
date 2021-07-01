@@ -33,7 +33,7 @@ library LibLoans {
     /**
      * @notice it returns the loan
      * @param loanID the ID of the respective loan
-     * @return l_ the loan 
+     * @return l_ the loan
      */
     function loan(uint256 loanID) internal view returns (Loan storage l_) {
         l_ = s().loans[loanID];
@@ -48,7 +48,12 @@ library LibLoans {
         d_ = s().loanDebt[loanID];
     }
 
-    // DEPRECATED
+    /**
+     * @notice it returns the loan terms from a respective loan
+     * @notice DEPRECATED
+     * @param loanID the ID of the respective loan
+     * @return t_ the loan terms from a respective loan
+     */
     function terms(uint256 loanID)
         internal
         view
@@ -85,7 +90,12 @@ library LibLoans {
     {
         return amountBorrow.percent(uint16(getInterestRatio(loanID)));
     }
-    
+
+    /**
+     * @notice it returns the collateral needed in tokens
+     * @param loanID the identifier of the loan to return the collateral from
+     * @return _needed the collateral tokens needed for a loan
+     */
     function getCollateralNeeded(uint256 loanID)
         internal
         view

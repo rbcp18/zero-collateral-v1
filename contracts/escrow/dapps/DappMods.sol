@@ -19,7 +19,7 @@ abstract contract DappMods {
         );
         _;
     }
-    
+
     /**
      * @notice checks if the respective loan escrow is secure
      * @param loanID uint256 of the respective loan escrow

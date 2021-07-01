@@ -25,6 +25,7 @@ const deployProtocol: DeployFunction = async (hre) => {
 
   const { address: nftAddress } = await contracts.get('TellerNFT')
   const loansEscrowBeacon = await deployLoansEscrowBeacon(hre)
+  const market = await deployMarket(hre)
   const collateralEscrowBeacon = await deployCollateralEscrowBeacon(hre)
   const tTokenBeacon = await deployTTokenBeacon(hre)
 
@@ -226,6 +227,26 @@ const addAuthorizedAddresses = async (
       .connect(await getNamedSigner('deployer'))
       .addAuthorizedAddressList(list)
       .then(({ wait }) => wait())
+}
+
+const deployMarket = async (hre: HardhatRuntimeEnvironment): Promise<void> => {
+  const { ethers, log } = hre
+  log('********** Deploying Teller Market **********', { indent: 2 })
+  log('')
+  const processRequestLib = await deploy({
+    hre,
+    contract: 'ProcessRequestLib',
+    log: true,
+  })
+  const maxInterestRate = 10000
+  const maxCollateralRatio = 15000
+  const maxLoanAmount = 25000
+  const tellerMarketHandler = await deploy({
+    hre,
+    contract: 'TellerMarketHandler',
+    log: true,
+    args: [maxInterestRate, maxCollateralRatio, maxLoanAmount],
+  })
 }
 
 const deployLoansEscrowBeacon = async (

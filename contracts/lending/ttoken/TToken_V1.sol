@@ -425,7 +425,9 @@ contract TToken_V1 is ITToken {
 
     /**
      * @notice it retrives the value in the underlying tokens
-     * 
+     * @param amount the amount of underlying
+     * @param rate the rate the underlying is exchanging at
+     * @return value_ the value of the underlying
      */
     function _valueInUnderlying(uint256 amount, uint256 rate)
         internal

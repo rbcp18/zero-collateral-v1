@@ -1,6 +1,12 @@
 import chai, { expect } from 'chai'
 import { solidity } from 'ethereum-waffle'
 import { Signer } from 'ethers'
+import {
+  ComputationResult,
+  Proof,
+  // @ts-ignore
+} from 'zokrates-js/node'
+import { defaultMaxListeners } from 'events'
 import hre from 'hardhat'
 
 import { getMarkets, getNFT } from '../../config'
@@ -11,6 +17,9 @@ import {
   LoanType,
   takeOutLoanWithNfts,
   takeOutLoanWithoutNfts,
+  outputCraValues,
+  fillZKCRAConfigInfo,
+  borrowWithZKCRA,
 } from '../helpers/loans'
 
 chai.should()
@@ -35,7 +44,7 @@ describe('Loans', () => {
       deployer = await getNamedSigner('deployer')
     })
     // tests for merged loan functions
-    describe.only('merge create loan', () => {
+    describe('merge create loan', () => {
       let helpers: any = null
       before(async () => {
         // update percentage submission percentage value to 0 for this test
@@ -133,20 +142,59 @@ describe('Loans', () => {
           )
           await evm.advanceTime(rateLimit)
         })
-        it('creates a loan', async () => {
-          // get helpers
-          const { getHelpers } = await takeOutLoanWithNfts({
-            amount: 100,
-            lendToken: market.lendingToken,
+      })
+      it('creates a loan', async () => {
+        console.log(helpers.details.loan)
+        expect(helpers.details.loan).to.exist
+      })
+      it('should be an active loan', () => {
+        // get loanStatus from helpers and check if it's equal to 2, which means it's active
+        const loanStatus = helpers.details.loan.status
+        expect(loanStatus).to.equal(2)
+      })
+    })
+    describe('create loan w/ zkCRA', async () => {
+      // declare computation and proof variables to be used throughout the test
+      let goodScoreComputation: ComputationResult
+      let goodProof_: Proof
+      let badProof_: Proof
+      let helpers: any
+      before(async () => {
+        // we fill the necessary config information (admins mostly) into our providers
+        // and market
+        console.log('filling zkCRAConfigInfo')
+        await fillZKCRAConfigInfo()
+      })
+      describe('good score', async () => {
+        // check if computation and proof exist
+        it('checks if proof are returned from good score', async () => {
+          const goodScore = true
+          const { proof } = await outputCraValues(goodScore)
+          goodProof_ = proof
+          goodProof_.should.exist
+        })
+        it('uses witness, output and proof to take out a loan with a good score', async () => {
+          const { getHelpers } = await borrowWithZKCRA({
+            proof: goodProof_,
           })
           helpers = await getHelpers()
-
+          // check if loan exists
           expect(helpers.details.loan).to.exist
         })
-        it('should be an active loan', () => {
-          // get loanStatus from helpers and check if it's equal to 2, which means it's active
-          const loanStatus = helpers.details.loan.status
-          expect(loanStatus).to.equal(2)
+      })
+      describe('bad score', async () => {
+        // check if computation and proof exist
+        it('checks if proof are returned from bad score', async () => {
+          const goodScore = false
+          const { proof } = await outputCraValues(goodScore)
+          badProof_ = proof
+          badProof_.should.exist
+        })
+        it('take out a loan should fail with bad score', async () => {
+          const { tx } = await borrowWithZKCRA({
+            proof: badProof_,
+          })
+          await tx.should.be.revertedWith('market score not high enough!')
         })
       })
     })

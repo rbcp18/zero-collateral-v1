@@ -1,14 +1,17 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-// Libraries
+// External Libraries
 import { Counters } from "@openzeppelin/contracts/utils/Counters.sol";
 import {
     EnumerableSet
 } from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
-import "../shared/libraries/NumbersList.sol";
 
-// Interfaces
+// Teller Libraries
+import "../shared/libraries/NumbersList.sol";
+import { Verifier } from "../market/cra/verifier.sol";
+
+// Teller Interfaces
 import { ILoansEscrow } from "../escrow/escrow/ILoansEscrow.sol";
 import { ICollateralEscrow } from "../market/collateral/ICollateralEscrow.sol";
 import { ITToken } from "../lending/ttoken/ITToken.sol";
@@ -53,27 +56,41 @@ struct LoanDebt {
     uint256 interestOwed;
 }
 
+/**
+ * @notice our loan request to be sent to our borrow function to verify Proof with the witness,
+   verify our signature data, process the market score to get our interest rate, then create a loan
+   if market score is sufficient 
+ * @param request the user request containing all the necessary information for our loan request
+ * @param marketId the market we are borrowing a loan from
+ * @param proof the proof to verify 
+ * @param witness the witness that contains our identifier, score and commitment data 
+ * @param signatureData the signatureData that is used to validate against the commitments we construct
+ */
 struct LoanRequest {
     LoanUserRequest request;
-    LoanConsensusResponse[] responses;
+    address marketHandlerAddress;
+    Verifier.Proof snarkProof;
+    uint256[26] snarkWitnesses;
+    DataProviderSignature[] dataProviderSignatures;
 }
 
 /**
  * @notice Borrower request object to take out a loan
  * @param borrower The wallet address of the borrower
  * @param assetAddress The address of the asset for the requested loan
- * @param amount The amount of tokens requested by the borrower for the loan
- * @param requestNonce The nonce of the borrower wallet address required for authentication
+ * @param assetAmount The amount of tokens requested by the borrower for the loan
+ * @param collateralAsset the asset provided by the user as collateral to the loan
+ * @param collateralAmount the amount of the above collateral
  * @param duration The length of time in seconds that the loan has been requested for
- * @param requestTime The timestamp at which the loan was requested
  */
 struct LoanUserRequest {
     address payable borrower;
     address assetAddress;
-    uint256 amount;
-    uint32 requestNonce;
+    address collateralAsset;
+    uint16 collateralRatio;
     uint32 duration;
-    uint32 requestTime;
+    uint256 collateralAmount;
+    uint256 assetAmount;
 }
 
 /**
@@ -106,6 +123,52 @@ struct Signature {
     uint8 v;
     bytes32 r;
     bytes32 s;
+}
+
+/**
+ * @notice It represents signature data from our data providers
+ * @param signature signature from our data provider
+ * @param signedAt the timed they signed at
+ */
+struct DataProviderSignature {
+    Signature signature;
+    uint256 signedAt;
+}
+
+/**
+ * @notice It represents the provider configuration respective to a market
+ * @param admin a mapping of all admins in a provider configuration
+ * @param signer a mapping of all accepted signers in a provider configuration
+ * @param maxAge a uint used as a check to see if current blocktime stamp - maxAge is less than
+ * the moment the provider signed at
+ */
+struct ProviderConfig {
+    mapping(address => bool) admin;
+    mapping(address => bool) signer;
+    uint32 maxAge;
+}
+
+/**
+ * @notice It represents the information needed from a market when users request loans from the
+ * respective market
+ * @param maxInterestRate the max interest rate in a market
+ * @param maxCollateralRatio the max collateral ratio in a market
+ * @param maxLoanAmount the max loan amount in a market
+ */
+struct MarketInformation {
+    uint16 maxInterestRate;
+    uint16 maxCollateralRatio;
+    uint256 maxLoanAmount;
+}
+
+/**
+ * @notice it represents information of a market configuration which contains the admin and provider configurations
+ * @param admin a mapping of addresses to an administrator
+ * @param providerConfigs a mapping of ID to provider config
+ */
+struct MarketConfig {
+    mapping(address => bool) admin;
+    MarketInformation marketInformation;
 }
 
 struct MarketStorage {
