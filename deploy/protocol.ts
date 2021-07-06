@@ -269,7 +269,7 @@ const deployLoansEscrowBeacon = async (
   const beaconProxy = await deploy({
     hre,
     contract: 'InitializeableBeaconProxy',
-    indent: 4
+    indent: 4,
   })
 
   const beacon = await deploy<UpgradeableBeaconFactory>({
@@ -322,7 +322,7 @@ const deployCollateralEscrowBeacon = async (
   const beaconProxy = await deploy({
     hre,
     contract: 'InitializeableBeaconProxy',
-    indent: 4
+    indent: 4,
   })
 
   const beacon = await deploy<UpgradeableBeaconFactory>({
@@ -375,7 +375,7 @@ const deployTTokenBeacon = async (
   const beaconProxy = await deploy({
     hre,
     contract: 'InitializeableBeaconProxy',
-    indent: 4
+    indent: 4,
   })
 
   const beacon = await deploy<UpgradeableBeaconFactory>({

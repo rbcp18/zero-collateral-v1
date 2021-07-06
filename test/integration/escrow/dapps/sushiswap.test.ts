@@ -14,7 +14,7 @@ chai.use(solidity)
 
 const { tokens, getNamedSigner, evm } = hre
 
-describe('SushiswapDapp', () => {
+describe.skip('SushiswapDapp', () => {
   let diamond: ITellerDiamond
   let lendingToken: ERC20
   let link: ERC20
@@ -24,7 +24,7 @@ describe('SushiswapDapp', () => {
   function testSushiswap(market: Market): void {
     describe(`${market.lendingToken} lending token`, () => {
       before(async () => {
-        ;({ diamond, lendingToken } = await fundedMarket({
+        ({ diamond, lendingToken } = await fundedMarket(hre, {
           assetSym: market.lendingToken,
           amount: 100000,
         }))
@@ -43,7 +43,7 @@ describe('SushiswapDapp', () => {
 
       describe('swap', () => {
         it('Should be able to swap using Sushiswap', async () => {
-          const { getHelpers } = await takeOutLoanWithoutNfts({
+          const { getHelpers } = await takeOutLoanWithoutNfts(hre, {
             lendToken: market.lendingToken,
             collToken: market.collateralTokens[0],
             loanType: LoanType.UNDER_COLLATERALIZED,
@@ -90,7 +90,7 @@ describe('SushiswapDapp', () => {
         })
 
         it('Should NOT be able to swap using Sushiswap as not the loan borrower', async () => {
-          const { getHelpers } = await takeOutLoanWithoutNfts({
+          const { getHelpers } = await takeOutLoanWithoutNfts(hre, {
             lendToken: market.lendingToken,
             collToken: market.collateralTokens[0],
             loanType: LoanType.UNDER_COLLATERALIZED,
@@ -109,8 +109,8 @@ describe('SushiswapDapp', () => {
             .should.rejectedWith('Teller: dapp not loan borrower')
         })
 
-        it.skip('Should NOT be able to swap using Sushiswap with an unsecured loan', async () => {
-          const { getHelpers } = await takeOutLoanWithoutNfts({
+        it('Should NOT be able to swap using Sushiswap with an unsecured loan', async () => {
+          const { getHelpers } = await takeOutLoanWithoutNfts(hre, {
             lendToken: market.lendingToken,
             collToken: market.collateralTokens[0],
             loanType: LoanType.ZERO_COLLATERAL,

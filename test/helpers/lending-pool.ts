@@ -1,7 +1,7 @@
 import chai from 'chai'
 import { solidity } from 'ethereum-waffle'
 import { BigNumber, Signer } from 'ethers'
-import { evm } from 'hardhat'
+import { HardhatRuntimeEnvironment } from 'hardhat/types'
 
 import { ERC20, ITellerDiamond, ITToken } from '../../types/typechain'
 
@@ -11,15 +11,25 @@ export interface LPHelperArgs {
   diamond: ITellerDiamond
   lendingToken: ERC20
   tToken: ITToken
+  amount: BigNumber | null
+}
+
+interface LPHelpersReturn {
+  deposit: ReturnType<typeof depositWithArgs>
+  withdraw: ReturnType<typeof withdrawWithArgs>
 }
 
 /**
  * Creates all LP test helper functions.
+ * @param hre {HardhatRuntimeEnvironment}
  * @param args {LPHelperArgs}
  */
-export const getLPHelpers = (args: LPHelperArgs) => ({
-  deposit: depositWithArgs(args),
-  withdraw: withdrawWithArgs(args),
+export const getLPHelpers = (
+  hre: HardhatRuntimeEnvironment,
+  args: LPHelperArgs
+): LPHelpersReturn => ({
+  deposit: depositWithArgs(hre, args),
+  withdraw: withdrawWithArgs(hre, args),
   // createLoan: creatLoanWithArgs(args),
   // repay: repayWithArgs(args),
 })
@@ -27,9 +37,11 @@ export const getLPHelpers = (args: LPHelperArgs) => ({
 /**
  * Factory function to create a test LP helper to easily deposit and verify
  * state changes.
+ * @param hre {HardhatRuntimeEnvironment}
  * @param args {LPHelperArgs}
  */
-export const depositWithArgs = (args: LPHelperArgs) =>
+export const depositWithArgs =
+  (hre: HardhatRuntimeEnvironment, args: LPHelperArgs) =>
   /**
    * LendingPool helper function for testing the deposit functionality.
    *  - Approves the lending token amount for the lender.
@@ -39,8 +51,15 @@ export const depositWithArgs = (args: LPHelperArgs) =>
    * @param lender {Signer} Signer to call the LP as.
    * @param amount {BigNumber} An amount of tokens to deposit.
    */
-  async (lender: Signer, amount: BigNumber): Promise<void> => {
+  async (): Promise<void> => {
+    const { getNamedSigner } = hre
+    const lender = await getNamedSigner('lender')
+    const lenderAddress = await lender.getAddress()
     // Approve amount to loan
+    const amount =
+      args.amount == null
+        ? await args.lendingToken.balanceOf(lenderAddress)
+        : args.amount
     await args.lendingToken
       .connect(lender)
       .approve(args.diamond.address, amount)
@@ -55,9 +74,11 @@ export const depositWithArgs = (args: LPHelperArgs) =>
 /**
  * Factory function to create a test LP helper to easily withdraw and verify
  * state changes.
+ * @param hre {HardhatRuntimeEnvironment}
  * @param args {LPHelperArgs}
  */
-export const withdrawWithArgs = (args: LPHelperArgs) =>
+export const withdrawWithArgs =
+  (hre: HardhatRuntimeEnvironment, args: LPHelperArgs) =>
   /**
    * LendingPool helper function for testing the withdraw functionality.
    *  - Estimates the exact amount of tokens to be withdrawn/burned.
@@ -67,11 +88,13 @@ export const withdrawWithArgs = (args: LPHelperArgs) =>
    * @param lender {Signer} Signer to call the LP as.
    * @param amount {BigNumber} Optional amount to withdraw. Defaults to withdraw all.
    */
-  async (lender: Signer, amount?: BigNumber): Promise<void> => {
+  async (): Promise<void> => {
+    const { getNamedSigner } = hre
+    const lender = await getNamedSigner('lender')
     const lenderAddress = await lender.getAddress()
 
     // Withdraw
-    if (amount == null) {
+    if (args.amount == null) {
       await args.tToken
         .connect(lender)
         .redeem(await args.tToken.balanceOf(lenderAddress))
@@ -79,7 +102,7 @@ export const withdrawWithArgs = (args: LPHelperArgs) =>
     } else {
       await args.tToken
         .connect(lender)
-        .redeemUnderlying(amount)
+        .redeemUnderlying(args.amount)
         .should.emit(args.tToken, 'Redeem')
     }
   }

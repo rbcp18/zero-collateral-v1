@@ -1,5 +1,4 @@
 import { BigNumberish } from 'ethers'
-import hre from 'hardhat'
 import { HardhatRuntimeEnvironment } from 'hardhat/types'
 
 import { ERC20, ITellerDiamond } from '../../types/typechain'
@@ -17,7 +16,7 @@ export interface FundedMarketReturn {
   lendingToken: ERC20
 }
 
-export const fundedMarket = hre.deployments.createFixture(
+export const fundedMarket = 
   async (
     hre: HardhatRuntimeEnvironment,
     opts?: FundedMarketArgs
@@ -58,4 +57,4 @@ export const fundedMarket = hre.deployments.createFixture(
       lendingToken,
     }
   }
-)
+// )

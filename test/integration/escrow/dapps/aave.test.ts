@@ -14,7 +14,7 @@ chai.use(solidity)
 
 const { getNamedSigner, contracts, evm } = hre
 
-describe('AaveDapp', () => {
+describe.skip('AaveDapp', () => {
   getMarkets(hre.network).forEach(testAave)
 
   function testAave(market: Market): void {
@@ -24,7 +24,7 @@ describe('AaveDapp', () => {
       let aToken: IAToken
 
       before(async () => {
-        ;({ diamond, lendingToken } = await fundedMarket({
+        ({ diamond, lendingToken } = await fundedMarket(hre, {
           assetSym: market.lendingToken,
           amount: 100000,
         }))
@@ -45,7 +45,7 @@ describe('AaveDapp', () => {
 
       describe('lend, redeemAll', () => {
         it('Should be able to lend and then redeem successfully from Aave', async () => {
-          const { getHelpers } = await takeOutLoanWithoutNfts({
+          const { getHelpers } = await takeOutLoanWithoutNfts(hre, {
             lendToken: market.lendingToken,
             collToken: market.collateralTokens[0],
             loanType: LoanType.UNDER_COLLATERALIZED,
@@ -82,7 +82,7 @@ describe('AaveDapp', () => {
         })
 
         it.skip('Should not be able to lend into Aave as not the loan borrower', async () => {
-          const { getHelpers } = await takeOutLoanWithoutNfts({
+          const { getHelpers } = await takeOutLoanWithoutNfts(hre, {
             lendToken: market.lendingToken,
             collToken: market.collateralTokens[0],
             loanType: LoanType.UNDER_COLLATERALIZED,

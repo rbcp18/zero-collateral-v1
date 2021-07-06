@@ -438,7 +438,7 @@ contract TToken_V1 is ITToken, ReentryMods {
     }
 
     /**
-     * @notice it retrives the value in the underlying tokens
+     * @notice it retrieves the value in the underlying tokens
      *
      */
     function _valueInUnderlying(uint256 amount, uint256 rate)

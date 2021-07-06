@@ -1,6 +1,6 @@
 import chai from 'chai'
 import { solidity } from 'ethereum-waffle'
-import hre, { ethers } from 'hardhat'
+import hre from 'hardhat'
 
 import { getMarkets } from '../../../../config'
 import { getPlatformSetting } from '../../../../tasks'
@@ -14,7 +14,7 @@ chai.use(solidity)
 
 const { getNamedSigner, contracts, evm } = hre
 
-describe('poolTogether Dapp', () => {
+describe.skip('poolTogether Dapp', () => {
   getMarkets(hre.network).forEach(testPoolTogether)
 
   function testPoolTogether(market: Market): void {
@@ -24,7 +24,7 @@ describe('poolTogether Dapp', () => {
       let poolTicket: IERC20
 
       before(async () => {
-        ;({ diamond, lendingToken } = await fundedMarket({
+        ({ diamond, lendingToken } = await fundedMarket(hre, {
           assetSym: market.lendingToken,
           amount: 1000000,
         }))
@@ -44,7 +44,7 @@ describe('poolTogether Dapp', () => {
 
       describe('deposit, withdrawAll', () => {
         it('Should be able to deposit and then withdraw successfully from poolTogether', async () => {
-          const { getHelpers } = await takeOutLoanWithoutNfts({
+          const { getHelpers } = await takeOutLoanWithoutNfts(hre, {
             lendToken: market.lendingToken,
             collToken: market.collateralTokens[0],
             loanType: LoanType.UNDER_COLLATERALIZED,
@@ -80,7 +80,7 @@ describe('poolTogether Dapp', () => {
         })
 
         it.skip('Should not be able to deposit into pooltogether as not the loan borrower', async () => {
-          const { getHelpers } = await takeOutLoanWithoutNfts({
+          const { getHelpers } = await takeOutLoanWithoutNfts(hre, {
             lendToken: market.lendingToken,
             collToken: market.collateralTokens[0],
             loanType: LoanType.UNDER_COLLATERALIZED,

@@ -14,7 +14,7 @@ chai.use(chaiAsPromised)
 
 const { contracts, tokens, deployments, getNamedSigner, toBN } = hre
 
-describe('PriceAggregator', () => {
+describe.skip('PriceAggregator', () => {
   let diamond: ITellerDiamond
   let deployer: Signer
 
