@@ -7,7 +7,7 @@ import { ADMIN, PAUSER, AUTHORIZED } from "../shared/roles.sol";
 import {
     UpgradeableBeaconFactory
 } from "../shared/proxy/beacon/UpgradeableBeaconFactory.sol";
-import { TellerNFT } from "../nft/TellerNFT.sol";
+import { TellerNFT } from "../nft/bridging/TellerNFT.sol";
 
 // Interfaces
 import { IUniswapV2Router } from "../shared/interfaces/IUniswapV2Router.sol";

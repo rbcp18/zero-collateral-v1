@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 // Contracts
-import { TellerNFT } from "../TellerNFT.sol";
+import { TellerNFT } from "../bridging/TellerNFT.sol";
 
 // Libraries
 import {

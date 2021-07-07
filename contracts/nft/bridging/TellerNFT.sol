@@ -12,7 +12,7 @@ import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
 // Interfaces
-import "./ITellerNFT.sol";
+import "../ITellerNFT.sol";
 
 /*****************************************************************************************************/
 /**                                             WARNING                                             **/

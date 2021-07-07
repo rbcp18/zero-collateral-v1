@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 // Contracts
-import { TellerNFT } from "../nft/TellerNFT.sol";
+import { TellerNFT } from "./bridging/TellerNFT.sol";
 import { RolesMods } from "../contexts2/access-control/roles/RolesMods.sol";
 import { ADMIN, AUTHORIZED } from "../shared/roles.sol";
 import "../nft/TellerNFTDictionary.sol";

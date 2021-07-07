@@ -123,6 +123,15 @@ export default <HardhatUserConfig>{
           },
         },
       },
+      {
+        version: '0.6.3',
+        settings: {
+          optimizer: {
+            enabled: true,
+            runs: 200,
+          },
+        },
+      },
     ],
   },
   contractSizer: {
