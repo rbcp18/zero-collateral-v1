@@ -33,7 +33,7 @@ abstract contract Context {
  *
  * For an implementation, see {ERC165}.
  */
-interface IERC165 {
+interface IERC165_ {
     /**
      * @dev Returns true if this contract implements the interface defined by
      * `interfaceId`. See the corresponding
@@ -50,7 +50,7 @@ interface IERC165 {
 /**
  * @dev Required interface of an ERC721 compliant contract.
  */
-interface IERC721 is IERC165 {
+interface IERC721_ is IERC165_ {
     /**
      * @dev Emitted when `tokenId` token is transfered from `from` to `to`.
      */
@@ -207,7 +207,7 @@ interface IERC721 is IERC165 {
  * @title ERC-721 Non-Fungible Token Standard, optional metadata extension
  * @dev See https://eips.ethereum.org/EIPS/eip-721
  */
-interface IERC721Metadata is IERC721 {
+interface IERC721Metadata_ is IERC721_ {
     /**
      * @dev Returns the token collection name.
      */
@@ -229,7 +229,7 @@ interface IERC721Metadata is IERC721 {
  * @title ERC-721 Non-Fungible Token Standard, optional enumeration extension
  * @dev See https://eips.ethereum.org/EIPS/eip-721
  */
-interface IERC721Enumerable is IERC721 {
+interface IERC721Enumerable is IERC721_ {
     /**
      * @dev Returns the total amount of tokens stored by the contract.
      */
@@ -282,7 +282,7 @@ interface IERC721Receiver {
  * Contracts may inherit from this and call {_registerInterface} to declare
  * their support of an interface.
  */
-contract ERC165 is IERC165 {
+contract ERC165 is IERC165_ {
     /*
      * bytes4(keccak256('supportsInterface(bytes4)')) == 0x01ffc9a7
      */
@@ -344,7 +344,7 @@ contract ERC165 is IERC165 {
  * Using this library instead of the unchecked operations eliminates an entire
  * class of bugs, so it's recommended to use it always.
  */
-library SafeMath {
+library SafeMath_ {
     /**
      * @dev Returns the addition of two unsigned integers, reverting on
      * overflow.
@@ -703,7 +703,7 @@ library Address {
  * As of v3.0.0, only sets of type `address` (`AddressSet`) and `uint256`
  * (`UintSet`) are supported.
  */
-library EnumerableSet {
+library EnumerableSet_ {
     // To implement this library for multiple types with as little code
     // repetition as possible, we write it in terms of a generic Set type with
     // bytes32 values.
@@ -1279,13 +1279,13 @@ library Strings {
 contract ERC721 is
     Context,
     ERC165,
-    IERC721,
-    IERC721Metadata,
+    IERC721_,
+    IERC721Metadata_,
     IERC721Enumerable
 {
-    using SafeMath for uint256;
+    using SafeMath_ for uint256;
     using Address for address;
-    using EnumerableSet for EnumerableSet.UintSet;
+    using EnumerableSet_ for EnumerableSet_.UintSet;
     using EnumerableMap for EnumerableMap.UintToAddressMap;
     using Strings for uint256;
 
@@ -1294,7 +1294,7 @@ contract ERC721 is
     bytes4 private constant _ERC721_RECEIVED = 0x150b7a02;
 
     // Mapping from holder address to their (enumerable) set of owned tokens
-    mapping(address => EnumerableSet.UintSet) private _holderTokens;
+    mapping(address => EnumerableSet_.UintSet) private _holderTokens;
 
     // Enumerable mapping from token ids to their owners
     EnumerableMap.UintToAddressMap private _tokenOwners;
@@ -1883,11 +1883,11 @@ contract ERC721 is
  * accounts that have been granted it.
  */
 abstract contract AccessControl is Context {
-    using EnumerableSet for EnumerableSet.AddressSet;
+    using EnumerableSet_ for EnumerableSet_.AddressSet;
     using Address for address;
 
     struct RoleData {
-        EnumerableSet.AddressSet members;
+        EnumerableSet_.AddressSet members;
         bytes32 adminRole;
     }
 
@@ -2104,7 +2104,7 @@ interface IChildToken {
 }
 
 // File: contracts/common/Initializable.sol
-contract Initializable {
+contract Initializable_ {
     bool inited = false;
 
     modifier initializer() {
@@ -2115,7 +2115,7 @@ contract Initializable {
 }
 
 // File: contracts/common/EIP712Base.sol
-contract EIP712Base is Initializable {
+contract EIP712Base is Initializable_ {
     struct EIP712Domain {
         string name;
         string version;
@@ -2185,7 +2185,7 @@ contract EIP712Base is Initializable {
 
 // File: contracts/common/NativeMetaTransaction.sol
 contract NativeMetaTransaction is EIP712Base {
-    using SafeMath for uint256;
+    using SafeMath_ for uint256;
     bytes32 private constant META_TRANSACTION_TYPEHASH =
         keccak256(
             bytes(
@@ -2376,88 +2376,5 @@ contract ChildERC721 is
                 _mint(user, tokenIds[i]);
             }
         }
-    }
-
-    /**
-     * @notice called when user wants to withdraw token back to root chain
-     * @dev Should burn user's token. This transaction will be verified when exiting on root chain
-     * @param tokenId tokenId to withdraw
-     */
-    function withdraw(uint256 tokenId) external {
-        require(
-            _msgSender() == ownerOf(tokenId),
-            "ChildERC721: INVALID_TOKEN_OWNER"
-        );
-        _burn(tokenId);
-    }
-
-    /**
-     * @notice called when user wants to withdraw multiple tokens back to root chain
-     * @dev Should burn user's tokens. This transaction will be verified when exiting on root chain
-     * @param tokenIds tokenId list to withdraw
-     */
-    function withdrawBatch(uint256[] calldata tokenIds) external {
-        uint256 length = tokenIds.length;
-        require(length <= BATCH_LIMIT, "ChildERC721: EXCEEDS_BATCH_LIMIT");
-        for (uint256 i; i < length; i++) {
-            uint256 tokenId = tokenIds[i];
-            require(
-                _msgSender() == ownerOf(tokenId),
-                string(
-                    abi.encodePacked(
-                        "ChildERC721: INVALID_TOKEN_OWNER ",
-                        tokenId
-                    )
-                )
-            );
-            _burn(tokenId);
-        }
-        emit WithdrawnBatch(_msgSender(), tokenIds);
-    }
-
-    /**
-     * @notice called when user wants to withdraw token back to root chain with arbitrary metadata
-     * @dev Should handle withraw by burning user's token.
-     *
-     * This transaction will be verified when exiting on root chain
-     *
-     * @param tokenId tokenId to withdraw
-     */
-    function withdrawWithMetadata(uint256 tokenId) external {
-        require(
-            _msgSender() == ownerOf(tokenId),
-            "ChildERC721: INVALID_TOKEN_OWNER"
-        );
-
-        // Encoding metadata associated with tokenId & emitting event
-        emit TransferWithMetadata(
-            _msgSender(),
-            address(0),
-            tokenId,
-            this.encodeTokenMetadata(tokenId)
-        );
-
-        _burn(tokenId);
-    }
-
-    /**
-     * @notice This method is supposed to be called by client when withdrawing token with metadata
-     * and pass return value of this function as second paramter of `withdrawWithMetadata` method
-     *
-     * It can be overridden by clients to encode data in a different form, which needs to
-     * be decoded back by them correctly during exiting
-     *
-     * @param tokenId Token for which URI to be fetched
-     */
-    function encodeTokenMetadata(uint256 tokenId)
-        external
-        view
-        virtual
-        returns (bytes memory)
-    {
-        // You're always free to change this default implementation
-        // and pack more data in byte array which can be decoded back
-        // in L1
-        return abi.encode(tokenURI(tokenId));
     }
 }
