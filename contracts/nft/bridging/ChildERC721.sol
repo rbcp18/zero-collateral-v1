@@ -526,6 +526,7 @@ library Address {
         // and 0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470 is returned
         // for accounts without code, i.e. `keccak256('')`
         bytes32 codehash;
+
         bytes32 accountHash =
             0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470;
         // solhint-disable-next-line no-inline-assembly
@@ -2332,7 +2333,7 @@ contract ChildERC721 is
         string memory name_,
         string memory symbol_,
         address childChainManager
-    ) public ERC721(name_, symbol_) {
+    ) ERC721(name_, symbol_) {
         _setupContractId("ChildERC721");
         _setupRole(DEFAULT_ADMIN_ROLE, _msgSender());
         _setupRole(DEPOSITOR_ROLE, childChainManager);
