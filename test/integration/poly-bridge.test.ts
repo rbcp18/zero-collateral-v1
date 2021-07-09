@@ -1,7 +1,7 @@
 import chai, { expect } from 'chai'
 import { solidity } from 'ethereum-waffle'
 import { Signer } from 'ethers'
-import hre, { contracts, evm,getNamedAccounts, getNamedSigner } from 'hardhat'
+import hre, { contracts, evm, getNamedAccounts, getNamedSigner } from 'hardhat'
 
 import { getMarkets, getNFT } from '../../config'
 import {
@@ -64,6 +64,11 @@ describe.only('Bridging Assets to Polygon', () => {
           await rootToken
             .connect(borrowerSigner)
             .approve(erc721Predicate, ownedNFTs[i])
+
+          const approved = await rootToken
+            .connect(borrowerSigner)
+            .getApproved(ownedNFTs[i])
+          expect(erc721Predicate).to.equal(approved)
         }
       })
     })
