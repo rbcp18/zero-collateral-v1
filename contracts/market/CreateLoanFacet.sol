@@ -14,7 +14,6 @@ import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { LibLoans } from "./libraries/LibLoans.sol";
 import { LibEscrow } from "../escrow/libraries/LibEscrow.sol";
 import { LibCollateral } from "./libraries/LibCollateral.sol";
-import { MarketLib } from "./libraries/MarketLib.sol";
 import { LendingLib } from "../lending/libraries/LendingLib.sol";
 import {
     PlatformSettingsLib
@@ -33,7 +32,6 @@ import { NumbersLib } from "../shared/libraries/NumbersLib.sol";
 import { NFTLib } from "../nft/libraries/NFTLib.sol";
 import { Verifier } from "./cra/verifier.sol";
 import { ECDSA } from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
-import { MarketLib } from "./libraries/MarketLib.sol";
 import { ProcessRequestLib } from "./cra/ProcessRequestLib.sol";
 
 // Interfaces
@@ -85,26 +83,6 @@ contract CreateLoanFacet is RolesMods, ReentryMods, PausableMods {
         loan.status = LoanStatus.Active;
         loan.loanStartTime = uint32(block.timestamp);
         loan.duration = request.request.duration;
-    }
-
-    // used for testing our zkcra function
-    function initializeMarketAdmins() external authorized(ADMIN, msg.sender) {
-        // setting market admin
-        // MarketLib.m(bytes32(0)).admin[msg.sender] = true;
-        // // setting providers admin
-        // MarketLib.p(bytes32(0)).admin[msg.sender] = true;
-        // MarketLib.p(bytes32(uint256(1))).admin[msg.sender] = true;
-        // MarketLib.p(bytes32(uint256(2))).admin[msg.sender] = true;
-    }
-
-    function setProviderInformation(
-        bytes32 providerId,
-        uint32 maxAge,
-        address signer,
-        bool signerValue
-    ) external {
-        // MarketLib.setProviderSigner(providerId, signer, signerValue);
-        // MarketLib.setProviderMaxAge(providerId, maxAge);
     }
 
     /**

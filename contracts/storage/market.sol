@@ -15,6 +15,7 @@ import { Verifier } from "../market/cra/verifier.sol";
 import { ILoansEscrow } from "../escrow/escrow/ILoansEscrow.sol";
 import { ICollateralEscrow } from "../market/collateral/ICollateralEscrow.sol";
 import { ITToken } from "../lending/ttoken/ITToken.sol";
+import { States } from "../market/data/states.sol";
 
 // DEPRECATED
 struct LoanTerms {
@@ -92,6 +93,7 @@ struct LoanUserRequest {
     uint32 duration;
     uint256 collateralAmount;
     uint256 assetAmount;
+    States.StatesCode code;
 }
 
 /**

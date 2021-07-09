@@ -245,7 +245,9 @@ const deployMarket = async (hre: HardhatRuntimeEnvironment): Promise<void> => {
     contract: 'ProcessRequestLib',
     log: true,
   })
-  const maxInterestRate = 10000
+
+  // teller market values
+  const maxInterestRate = 3500
   const maxCollateralRatio = 15000
   const maxLoanAmount = 25000
   const tellerMarketHandler = await deploy({

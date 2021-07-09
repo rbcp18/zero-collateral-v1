@@ -529,13 +529,15 @@ export const borrowWithZKCRA = async (
       .slice(10, 18)
       .map((input: string) => input.substr(2).substr(56))
       .join('')
-
+  console.log('second input made')
   const thirdInput =
     '0x' +
     proof.inputs
       .slice(18, 26)
       .map((input: string) => input.substr(2).substr(56))
       .join('')
+
+  console.log('Third input made')
   // get the signer
   const signer = await getNamedSigner('craSigner')
   // get the time stamp
@@ -581,6 +583,7 @@ export const borrowWithZKCRA = async (
   }
 
   // third signature
+  console.log('about to sign third signature')
   const timestampThree = moment().unix()
   const messageThree = ethers.BigNumber.from(thirdInput)
     .xor(timestampThree)
@@ -597,6 +600,7 @@ export const borrowWithZKCRA = async (
     },
     signedAt: timestampThree,
   }
+  console.log('signed all data')
 
   // all borrow variables
   const proof_ = proof.proof
@@ -616,6 +620,7 @@ export const borrowWithZKCRA = async (
   // collateral amount
   const collAmount = '100000'
 
+  console.log('coll amount ')
   // create loan user request object
   const request_ = {
     borrower: borrower,
@@ -623,8 +628,9 @@ export const borrowWithZKCRA = async (
     assetAmount: assetAmount,
     collateralAsset: '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2',
     collateralAmount: collAmount,
-    collateralRatio: 500,
+    collateralRatio: 5000,
     duration: moment.duration(1, 'day').asSeconds(),
+    code: 2,
   }
 
   // teller market address
