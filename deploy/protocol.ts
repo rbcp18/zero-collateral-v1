@@ -184,6 +184,8 @@ const deployProtocol: DeployFunction = async (hre) => {
     execute,
   }
   const diamond = await deployDiamond<ITellerDiamond, any>(tellerDiamondArgs)
+  console.log('Diamond address *****')
+  console.log(diamond.address)
 
   await addAuthorizedAddresses(hre, diamond)
 }
@@ -249,7 +251,7 @@ const deployLoansEscrowBeacon = async (
   const beaconProxy = await deploy({
     hre,
     contract: 'InitializeableBeaconProxy',
-    indent: 4
+    indent: 4,
   })
 
   const beacon = await deploy<UpgradeableBeaconFactory>({
@@ -302,7 +304,7 @@ const deployCollateralEscrowBeacon = async (
   const beaconProxy = await deploy({
     hre,
     contract: 'InitializeableBeaconProxy',
-    indent: 4
+    indent: 4,
   })
 
   const beacon = await deploy<UpgradeableBeaconFactory>({
@@ -355,7 +357,7 @@ const deployTTokenBeacon = async (
   const beaconProxy = await deploy({
     hre,
     contract: 'InitializeableBeaconProxy',
-    indent: 4
+    indent: 4,
   })
 
   const beacon = await deploy<UpgradeableBeaconFactory>({

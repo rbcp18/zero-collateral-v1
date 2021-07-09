@@ -3,7 +3,10 @@ pragma solidity ^0.8.3;
 
 // Interfaces
 import "./TellerNFT.sol";
-import "./ChildERC721.sol";
+import { ITellerDiamond } from "../../shared/interfaces/ITellerDiamond.sol";
+
+// Address utility
+import { Address } from "@openzeppelin/contracts/utils/Address.sol";
 
 contract PolyTellerNFT is TellerNFT {
     bytes32 DEPOSITOR = keccak256("DEPOSITOR");
@@ -52,6 +55,7 @@ contract PolyTellerNFT is TellerNFT {
 
         _metadataBaseURI = "https://gateway.pinata.cloud/ipfs/";
         _contractURIHash = "QmWAfQFFwptzRUCdF2cBFJhcB2gfHJMd7TQt64dZUysk3R";
+
         // sets up a role for child chain manager to be the depositor
         _setupRole(DEPOSITOR, 0x195fe6EE6639665CCeB15BCCeB9980FC445DFa0B);
     }
@@ -61,20 +65,31 @@ contract PolyTellerNFT is TellerNFT {
      * @dev Should be callable only by ChildChainManager
      * Should handle deposit by minting the required tokenId for user
      * Make sure minting is done only by this function
-     * @param diamond user address for whom deposit is being done
+     * @param diamondAddress user address for whom deposit is being done
      * @param depositData abi encoded tokenId
      */
-    function deposit(address diamond, bytes calldata depositData)
+    function deposit(address diamondAddress, bytes calldata depositData)
         external
         onlyDepositor
     {
         (address user, uint256[] memory tokenIds) =
             abi.decode(depositData, (address, uint256[]));
+        ITellerDiamond diamond = ITellerDiamond(diamondAddress);
         uint256 length = tokenIds.length;
+        // loop through the token ids to mint a token to the diamond
+        // then stake them for the user
         for (uint256 i; i < length; i++) {
             // TODO: variable with encoded data to call the stake function
-            _safeMint(diamond, tokenIds[i]);
-            // TODO: call facet when safe mint completes (OnErc721received({encoded bytes of data}))
+            _safeMint(diamondAddress, tokenIds[i]);
+
+            bytes memory callData =
+                abi.encode(diamond.stakeNFTs.selector, tokenIds);
+
+            Address.functionCall(
+                diamondAddress,
+                callData,
+                "Teller: function call failed"
+            );
         }
     }
 
