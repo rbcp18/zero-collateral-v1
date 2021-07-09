@@ -35,7 +35,7 @@ describe('Loans', () => {
       deployer = await getNamedSigner('deployer')
     })
     // tests for merged loan functions
-    describe.only('merge create loan', () => {
+    describe('merge create loan', () => {
       let helpers: any = null
       before(async () => {
         // update percentage submission percentage value to 0 for this test
