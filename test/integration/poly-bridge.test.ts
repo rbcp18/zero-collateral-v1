@@ -98,33 +98,48 @@ describe.only('Bridging Assets to Polygon', () => {
       })
     })
     describe.only('Mock tests', () => {
-      it('stakes NFTs on behalf of the user', async () => {
-        before(async () => {
-          const percentageSubmission = {
-            name: 'RequiredSubmissionsPercentage',
-            value: 0,
-          }
-          await updatePlatformSetting(percentageSubmission, hre)
+      describe('stake, unstake, deposit to polygon', () => {
+        it('stakes NFTs on behalf of the user', async () => {
+          before(async () => {
+            const percentageSubmission = {
+              name: 'RequiredSubmissionsPercentage',
+              value: 0,
+            }
+            await updatePlatformSetting(percentageSubmission, hre)
 
-          // Advance time
-          const { value: rateLimit } = await getPlatformSetting(
-            'RequestLoanTermsRateLimit',
-            hre
-          )
-          await evm.advanceTime(rateLimit)
+            // Advance time
+            const { value: rateLimit } = await getPlatformSetting(
+              'RequestLoanTermsRateLimit',
+              hre
+            )
+            await evm.advanceTime(rateLimit)
+          })
+          await claimNFT({ account: borrower, merkleIndex: 0 }, hre)
+          ownedNFTs = await rootToken
+            .getOwnedTokens(borrower)
+            .then((arr) => (arr.length > 2 ? arr.slice(0, 2) : arr))
+          await rootToken
+            .connect(borrowerSigner)
+            .setApprovalForAll(diamond.address, true)
+          await diamond.connect(borrowerSigner).stakeNFTs(ownedNFTs)
+          const stakedNFTs = await diamond.getStakedNFTs(borrower)
+          for (let i = 0; i < ownedNFTs.length; i++) {
+            expect(ownedNFTs[i]).to.equal(stakedNFTs[i])
+          }
         })
-        await claimNFT({ account: borrower, merkleIndex: 0 }, hre)
-        ownedNFTs = await rootToken
-          .getOwnedTokens(borrower)
-          .then((arr) => (arr.length > 2 ? arr.slice(0, 2) : arr))
-        await rootToken
-          .connect(borrowerSigner)
-          .setApprovalForAll(diamond.address, true)
-        await diamond.connect(borrowerSigner).stakeNFTs(ownedNFTs)
-        const stakedNFTs = await diamond.getStakedNFTs(borrower)
-        expect(stakedNFTs).to.equal(ownedNFTs)
+        it('unstakes NFTs', async () => {
+          await diamond.connect(borrowerSigner).unstakeNFTs(ownedNFTs)
+          const stakedNFTs = await diamond.getStakedNFTs(borrower)
+          expect(stakedNFTs.length).to.equal(0)
+        })
+        it('burns the nfts then "deposits" to polygon', async () => {})
+        it('stakes the NFTs on polygon', async () => {})
       })
-      it('unstakes NFTs before "depositing" to polygon', async () => {})
+      describe('unstakes then "deposits" back to ethereum', () => {
+        it('unstakes NFTs on polygon', async () => {})
+        it('burns the NFTs then "deposits" to ethereum', async () => {})
+        it('stakes the NFTs on ethereum', async () => {})
+      })
     })
   }
 })
