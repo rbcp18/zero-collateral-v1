@@ -56,4 +56,29 @@ contract NFTFacet is RolesMods {
         // Give the caller authorization to protocol
         RolesLib.grantRole(AUTHORIZED, msg.sender);
     }
+
+    /**
+     * @notice it unstakes the NFTs by removing the NFT IDs from the list of the user's staked NFTs
+     * @param nftIDs the IDs of the NFT to remove from the list of the user's staked NFTs
+     */
+    function unstakeNFTs(uint256[] calldata nftIDs) external {
+        for (uint256 i; i < nftIDs.length; i++) {
+            // Stake NFT and transfer into diamond
+            NFTLib.unstake(nftIDs[i]);
+        }
+    }
+
+    /**
+     * @notice Sets the NFTDictionary address used to get information about an NFT and its tier.
+     * @param dictAddress Dictionary address to use.
+     *
+     * Requirements:
+     *  - Sender must have `ADMIN` role
+     */
+    function setNFTDictionary(address dictAddress)
+        external
+        authorized(ADMIN, msg.sender)
+    {
+        NFTLib.s().nftDictionary = TellerNFTDictionary(dictAddress);
+    }
 }

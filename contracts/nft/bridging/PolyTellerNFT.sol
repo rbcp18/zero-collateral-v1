@@ -57,7 +57,11 @@ contract PolyTellerNFT is TellerNFT {
         _contractURIHash = "QmWAfQFFwptzRUCdF2cBFJhcB2gfHJMd7TQt64dZUysk3R";
 
         // sets up a role for child chain manager to be the depositor
-        _setupRole(DEPOSITOR, 0x195fe6EE6639665CCeB15BCCeB9980FC445DFa0B);
+        // TODO: uncomment below when mapping is complete
+        // _setupRole(DEPOSITOR, 0x195fe6EE6639665CCeB15BCCeB9980FC445DFa0B);
+
+        // for mock tests
+        _setupRole(DEPOSITOR, msg.sender);
     }
 
     /**
