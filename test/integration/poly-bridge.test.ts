@@ -54,7 +54,7 @@ describe.only('Bridging Assets to Polygon', () => {
         borrowerSigner
       )
     })
-    describe('Mainnet', () => {
+    describe('Calling mapped contracts', () => {
       it('approves spending of tokens', async () => {
         before(async () => {
           const percentageSubmission = {
@@ -75,8 +75,6 @@ describe.only('Bridging Assets to Polygon', () => {
         ownedNFTs = await rootToken
           .getOwnedTokens(borrower)
           .then((arr) => (arr.length > 2 ? arr.slice(0, 2) : arr))
-        console.log('owned nfts')
-        console.log(ownedNFTs)
         for (let i = 0; i < ownedNFTs.length; i++) {
           await rootToken
             .connect(borrowerSigner)
@@ -95,9 +93,38 @@ describe.only('Bridging Assets to Polygon', () => {
         )
         const tellerNFTAddress = '0x2ceB85a2402C94305526ab108e7597a102D6C175'
         await rootChainManager
-          .connect(borrower)
+          .connect(borrowerSigner)
           .depositFor(borrower, tellerNFTAddress, depositData)
       })
+    })
+    describe.only('Mock tests', () => {
+      it('stakes NFTs on behalf of the user', async () => {
+        before(async () => {
+          const percentageSubmission = {
+            name: 'RequiredSubmissionsPercentage',
+            value: 0,
+          }
+          await updatePlatformSetting(percentageSubmission, hre)
+
+          // Advance time
+          const { value: rateLimit } = await getPlatformSetting(
+            'RequestLoanTermsRateLimit',
+            hre
+          )
+          await evm.advanceTime(rateLimit)
+        })
+        await claimNFT({ account: borrower, merkleIndex: 0 }, hre)
+        ownedNFTs = await rootToken
+          .getOwnedTokens(borrower)
+          .then((arr) => (arr.length > 2 ? arr.slice(0, 2) : arr))
+        await rootToken
+          .connect(borrowerSigner)
+          .setApprovalForAll(diamond.address, true)
+        await diamond.connect(borrowerSigner).stakeNFTs(ownedNFTs)
+        const stakedNFTs = await diamond.getStakedNFTs(borrower)
+        expect(stakedNFTs).to.equal(ownedNFTs)
+      })
+      it('unstakes NFTs before "depositing" to polygon', async () => {})
     })
   }
 })
