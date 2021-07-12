@@ -137,11 +137,12 @@ const deployProtocol: DeployFunction = async (hre) => {
       contract: 'NFTFacet',
       skipIfAlreadyDeployed: false,
     },
-    // // Dapps
-    // {
-    //   contract: 'AaveFacet',
-    //   skipIfAlreadyDeployed: true,
-    // },
+    {
+      contract: 'NFTMainnetBridgingToPolygonFacet',
+      skipIfAlreadyDeployed: true,
+      // can remove mock after mapping exists
+      mock: true,
+    },
   ]
 
   // Network specify Facets
