@@ -144,6 +144,12 @@ const deployProtocol: DeployFunction = async (hre) => {
       contract: 'PoolTogetherFacet',
       skipIfAlreadyDeployed: false,
     },
+    {
+      contract: 'NFTMainnetBridgingToPolygonFacet',
+      skipIfAlreadyDeployed: true,
+      // can remove mock after mapping exists
+      mock: true,
+    },
   ]
 
   // Network specify Facets

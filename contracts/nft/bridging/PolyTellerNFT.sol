@@ -8,6 +8,8 @@ import { ITellerDiamond } from "../../shared/interfaces/ITellerDiamond.sol";
 // Address utility
 import { Address } from "@openzeppelin/contracts/utils/Address.sol";
 
+import "hardhat/console.sol";
+
 contract PolyTellerNFT is TellerNFT {
     bytes32 DEPOSITOR = keccak256("DEPOSITOR");
 
@@ -83,31 +85,13 @@ contract PolyTellerNFT is TellerNFT {
         // loop through the token ids to mint a token to the diamond
         // then stake them for the user
         for (uint256 i; i < length; i++) {
-            // TODO: variable with encoded data to call the stake function
-            _safeMint(diamondAddress, tokenIds[i]);
-
-            bytes memory callData =
-                abi.encode(diamond.stakeNFTs.selector, tokenIds);
-
-            Address.functionCall(
-                diamondAddress,
-                callData,
-                "Teller: function call failed"
-            );
+            _mint(diamondAddress, tokenIds[i]);
+            console.log("after minting");
         }
-    }
-
-    /**
-     * @notice called when user wants to withdraw token back to root chain
-     * @dev Should burn user's token. This transaction will be verified when exiting on root chain
-     * @param tokenId tokenId to withdraw
-     */
-    function withdraw(uint256 tokenId) external {
-        require(
-            _msgSender() == ownerOf(tokenId),
-            "ChildERC721: INVALID_TOKEN_OWNER"
-        );
-        _burn(tokenId);
+        // call stakeNFTsOnBehalfOf from diamond address wrapped in the facet contract
+        // NewFacet(diamondAddress).stakeNFTsOnBehalfOf(tokenIds, user)
+        bytes memory callData =
+            abi.encode(diamond.stakeNFTs.selector, tokenIds);
     }
 
     /**

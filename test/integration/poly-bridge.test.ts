@@ -127,12 +127,16 @@ describe.only('Bridging Assets to Polygon', () => {
             expect(ownedNFTs[i]).to.equal(stakedNFTs[i])
           }
         })
-        it('unstakes NFTs', async () => {
-          await diamond.connect(borrowerSigner).unstakeNFTs(ownedNFTs)
-          const stakedNFTs = await diamond.getStakedNFTs(borrower)
-          expect(stakedNFTs.length).to.equal(0)
+        // remove the nft from mapping
+        it('"deposits" to polygon', async () => {
+          const depositData = ethers.utils.defaultAbiCoder.encode(
+            ['address', 'uint256[]'],
+            [borrower, ownedNFTs]
+          )
+          await childToken
+            .connect(deployer)
+            .deposit(diamond.address, depositData)
         })
-        it('burns the nfts then "deposits" to polygon', async () => {})
         it('stakes the NFTs on polygon', async () => {})
       })
       describe('unstakes then "deposits" back to ethereum', () => {

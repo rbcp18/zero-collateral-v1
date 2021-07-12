@@ -2,7 +2,6 @@
 pragma solidity ^0.8.0;
 
 // Contracts
-import { TellerNFT } from "./bridging/TellerNFT.sol";
 import { RolesMods } from "../contexts2/access-control/roles/RolesMods.sol";
 import { ADMIN, AUTHORIZED } from "../shared/roles.sol";
 
@@ -58,17 +57,6 @@ contract NFTFacet is RolesMods {
     }
 
     /**
-     * @notice it unstakes the NFTs by removing the NFT IDs from the list of the user's staked NFTs
-     * @param nftIDs the IDs of the NFT to remove from the list of the user's staked NFTs
-     */
-    function unstakeNFTs(uint256[] calldata nftIDs) external {
-        for (uint256 i; i < nftIDs.length; i++) {
-            // Stake NFT and transfer into diamond
-            NFTLib.unstake(nftIDs[i]);
-        }
-    }
-
-    /**
      * @notice Sets the NFTDictionary address used to get information about an NFT and its tier.
      * @param dictAddress Dictionary address to use.
      *
@@ -81,4 +69,26 @@ contract NFTFacet is RolesMods {
     {
         NFTLib.s().nftDictionary = TellerNFTDictionary(dictAddress);
     }
+
+    // create a new facet
+    // create initNFTBridge() ->
+    //      setApprovalForAll() -> on nfts belonging to ERC721 predicate
+    //
+    // create bridgeNFTToPolygon()
+    //      call unstake function()
+    //      encode [ownedNFTs, borrower] -> depositData
+    //      call depositFor()
+    //          rootChainManager contract -> (diamond.address (polygon), tellerNFTAddress(mainnet), depositData)
+    //
+    //
+    // create stakeNFTsOnBehalfOf(uint256[] tokenIds, address user) ->  EnumerableSet.add(s().stakedNFTs[owner], nftID);
+
+    // call stakeNFTs() -> on polytellernft
+    // call childchainmanager -> deposit() ^ same parameters
+    // call init() ->
+    //      set deployer as depositor only for tests
+
+    // create bridgeNFTToMainnet()
+    //      call withdrawBatch function()
+    //
 }
