@@ -101,48 +101,42 @@ describe.only('Bridging Assets to Polygon', () => {
       describe('stake, unstake, deposit to polygon', () => {
         it('stakes NFTs on behalf of the user', async () => {
           before(async () => {
-            const percentageSubmission = {
-              name: 'RequiredSubmissionsPercentage',
-              value: 0,
+            await diamond.connect(borrowerSigner).stakeNFTs(ownedNFTs)
+            const stakedNFTs = await diamond.getStakedNFTs(borrower)
+            for (let i = 0; i < ownedNFTs.length; i++) {
+              expect(ownedNFTs[i]).to.equal(stakedNFTs[i])
             }
-            await updatePlatformSetting(percentageSubmission, hre)
-
-            // Advance time
-            const { value: rateLimit } = await getPlatformSetting(
-              'RequestLoanTermsRateLimit',
-              hre
-            )
-            await evm.advanceTime(rateLimit)
           })
-          await claimNFT({ account: borrower, merkleIndex: 0 }, hre)
-          ownedNFTs = await rootToken
-            .getOwnedTokens(borrower)
-            .then((arr) => (arr.length > 2 ? arr.slice(0, 2) : arr))
-          await rootToken
-            .connect(borrowerSigner)
-            .setApprovalForAll(diamond.address, true)
-          await diamond.connect(borrowerSigner).stakeNFTs(ownedNFTs)
-          const stakedNFTs = await diamond.getStakedNFTs(borrower)
-          for (let i = 0; i < ownedNFTs.length; i++) {
-            expect(ownedNFTs[i]).to.equal(stakedNFTs[i])
-          }
+          // remove the nft from mapping
+          it('unstakes the nfts then "deposits" to polygon', async () => {
+            // unstakes the nfts
+            await diamond.connect(borrowerSigner).bridgeNFTToPolygon(ownedNFTs)
+            const stakedNFTs = await diamond.getStakedNFTs(borrower)
+            expect(stakedNFTs).length.to.equal(0)
+          })
+          it('stakes the NFTs on "polygon"', async () => {
+            // encode data
+            const depositData = ethers.utils.defaultAbiCoder.encode(
+              ['address', 'uint256[]'],
+              [borrower, ownedNFTs]
+            )
+
+            // stake the nfts
+            await childToken
+              .connect(deployer)
+              .deposit(diamond.address, depositData)
+
+            const stakedNFTs = await diamond
+              .connect(borrower)
+              .getStakedNFTs(borrower)
+            console.log(stakedNFTs)
+          })
         })
-        // remove the nft from mapping
-        it('"deposits" to polygon', async () => {
-          const depositData = ethers.utils.defaultAbiCoder.encode(
-            ['address', 'uint256[]'],
-            [borrower, ownedNFTs]
-          )
-          await childToken
-            .connect(deployer)
-            .deposit(diamond.address, depositData)
+        describe('unstakes then "deposits" back to ethereum', () => {
+          it('unstakes NFTs on polygon', async () => {})
+          it('burns the NFTs then "deposits" to ethereum', async () => {})
+          it('stakes the NFTs on ethereum', async () => {})
         })
-        it('stakes the NFTs on polygon', async () => {})
-      })
-      describe('unstakes then "deposits" back to ethereum', () => {
-        it('unstakes NFTs on polygon', async () => {})
-        it('burns the NFTs then "deposits" to ethereum', async () => {})
-        it('stakes the NFTs on ethereum', async () => {})
       })
     })
   }

@@ -17,4 +17,8 @@ contract MockNFTMainnetBridgingToPolygonFacet is
         internal
         override
     {}
+
+    function __initNFTBridge() internal override {
+        TELLER_NFT.setApprovalForAll(address(this), true);
+    }
 }

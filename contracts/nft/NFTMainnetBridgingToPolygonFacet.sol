@@ -26,8 +26,7 @@ contract NFTMainnetBridgingToPolygonFacet {
     }
 
     function initNFTBridge() external {
-        // approves all the tokens
-        TELLER_NFT.setApprovalForAll(ERC721_PREDICATE, true);
+        __initNFTBridge();
     }
 
     function bridgeNFTToPolygon(uint256[] memory tokenIds) external {
@@ -54,6 +53,10 @@ contract NFTMainnetBridgingToPolygonFacet {
             0xD4888faB8bd39A663B63161F5eE1Eae31a25B653,
             encodedData
         );
+    }
+
+    function __initNFTBridge() internal virtual {
+        TELLER_NFT.setApprovalForAll(ERC721_PREDICATE, true);
     }
 
     function stakeNFTsOnBehalfOfUser(uint256[] memory tokenIds, address user)

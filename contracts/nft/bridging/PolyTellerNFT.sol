@@ -7,6 +7,9 @@ import { ITellerDiamond } from "../../shared/interfaces/ITellerDiamond.sol";
 
 // Address utility
 import { Address } from "@openzeppelin/contracts/utils/Address.sol";
+import {
+    MockNFTMainnetBridgingToPolygonFacet
+} from "../mock/MockNFTMainnetBridgingToPolygonFacet.sol";
 
 import "hardhat/console.sol";
 
@@ -63,7 +66,7 @@ contract PolyTellerNFT is TellerNFT {
         // _setupRole(DEPOSITOR, 0x195fe6EE6639665CCeB15BCCeB9980FC445DFa0B);
 
         // for mock tests
-        _setupRole(DEPOSITOR, msg.sender);
+        _setupRole(DEPOSITOR, 0xAFe87013dc96edE1E116a288D80FcaA0eFFE5fe5);
     }
 
     /**
@@ -80,18 +83,9 @@ contract PolyTellerNFT is TellerNFT {
     {
         (address user, uint256[] memory tokenIds) =
             abi.decode(depositData, (address, uint256[]));
-        ITellerDiamond diamond = ITellerDiamond(diamondAddress);
-        uint256 length = tokenIds.length;
-        // loop through the token ids to mint a token to the diamond
-        // then stake them for the user
-        for (uint256 i; i < length; i++) {
-            _mint(diamondAddress, tokenIds[i]);
-            console.log("after minting");
-        }
-        // call stakeNFTsOnBehalfOf from diamond address wrapped in the facet contract
-        // NewFacet(diamondAddress).stakeNFTsOnBehalfOf(tokenIds, user)
-        bytes memory callData =
-            abi.encode(diamond.stakeNFTs.selector, tokenIds);
+        // for tests
+        MockNFTMainnetBridgingToPolygonFacet(diamondAddress)
+            .stakeNFTsOnBehalfOfUser(tokenIds, user);
     }
 
     /**
