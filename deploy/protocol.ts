@@ -145,10 +145,13 @@ const deployProtocol: DeployFunction = async (hre) => {
       skipIfAlreadyDeployed: false,
     },
     {
-      contract: 'NFTMainnetBridgingToPolygonFacet',
-      skipIfAlreadyDeployed: true,
-      // can remove mock after mapping exists
-      mock: true,
+      contract: 'MockNFTMainnetBridgingToPolygonFacet',
+      // random addresses for testing. won't do anything
+      args: [
+        '0x98ca52786e967d1469090adc075416948ca004a7',
+        '0x98ca52786e967d1469090adc075416948ca004a7',
+      ],
+      skipIfAlreadyDeployed: false,
     },
   ]
 
