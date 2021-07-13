@@ -12,7 +12,7 @@ contract MockNFTMainnetBridgingToPolygonFacet is
         NFTMainnetBridgingToPolygonFacet(polygonNFT, polygonDiamond)
     {}
 
-    // this function is empty because it doesn't do anything really for our tests
+    // this function is empty because it doesn't do much for our tests
     function __bridgePolygonDepositFor(uint256[] memory tokenIds)
         internal
         override

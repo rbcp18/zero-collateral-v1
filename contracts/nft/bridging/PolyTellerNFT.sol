@@ -11,6 +11,8 @@ import {
     MockNFTMainnetBridgingToPolygonFacet
 } from "../mock/MockNFTMainnetBridgingToPolygonFacet.sol";
 
+import { MockNFTPolygonBridgingToMainnetFacet } from "../mock/MockNFTPolygonBridgingToMainnetFacet.sol";
+
 import "hardhat/console.sol";
 
 contract PolyTellerNFT is TellerNFT {
@@ -95,6 +97,9 @@ contract PolyTellerNFT is TellerNFT {
      * @param tokenIds tokenId list to withdraw
      */
     function withdrawBatch(uint256[] calldata tokenIds) external {
+        address diamondAddress = 0xc14D994fe7C5858c93936cc3bD42bb9467d6fB2C;
+        // unstake first then withdraw
+        MockNFTPolygonBridgingToMainnetFacet(diamondAddress).bridgeNFTToMainnet(tokenIds);
         uint256 length = tokenIds.length;
         require(length <= BATCH_LIMIT, "ChildERC721: EXCEEDS_BATCH_LIMIT");
         for (uint256 i; i < length; i++) {
