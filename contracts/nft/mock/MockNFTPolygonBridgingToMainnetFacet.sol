@@ -6,9 +6,9 @@ import { NFTPolygonBridgingToMainnetFacet } from "../NFTPolygonBridgingToMainnet
 contract MockNFTPolygonBridgingToMainnetFacet is
     NFTPolygonBridgingToMainnetFacet
 {
-    constructor(address polygonNFT, address mainnetDiamond)
-        NFTPolygonBridgingToMainnetFacet(polygonNFT, mainnetDiamond)
+    constructor(address polygonNFT)
+        NFTPolygonBridgingToMainnetFacet(polygonNFT)
     {}
 
-    
+    function __exit(bytes memory exitCallData) internal override {}
 }

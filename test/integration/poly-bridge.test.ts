@@ -1,3 +1,4 @@
+import { MaticPOSClient } from '@maticnetwork/maticjs'
 import rootChainManagerAbi from '@maticnetwork/meta/network/mainnet/v1/artifacts/pos/RootChainManager.json'
 import chai, { expect } from 'chai'
 import { solidity } from 'ethereum-waffle'
@@ -26,6 +27,14 @@ import {
 
 chai.should()
 chai.use(solidity)
+
+const maticPOSClient = new MaticPOSClient({
+  network: 'testnet',
+  version: 'mumbai',
+  parentProvider:
+    'https://mainnet.infura.io/v3/514733758a4e4c1da27f5e2d61c97ee4',
+  maticProvider: 'https://rpc-mainnet.maticvigil.com',
+})
 
 describe.only('Bridging Assets to Polygon', () => {
   getMarkets(hre.network).forEach(testBridging)
@@ -88,7 +97,7 @@ describe.only('Bridging Assets to Polygon', () => {
       })
     })
     describe.only('Mock tests', () => {
-      describe.only('stake, unstake, deposit to polygon', () => {
+      describe('stake, unstake, deposit to polygon', () => {
         it('stakes NFTs on behalf of the user', async () => {
           await rootToken
             .connect(borrowerSigner)
@@ -123,13 +132,31 @@ describe.only('Bridging Assets to Polygon', () => {
         })
       })
       describe('burns the tokens then "deposits" back to ethereum', () => {
-        it('unstakes NFTs on polygon', async () => {
+        it('unstakes NFTs on polygon and burns them', async () => {
+          console.log('about to burn coins')
           const burnTx = await childToken
-            .connect(deployer)
+            .connect(borrower)
             .withdrawBatch(ownedNFTs)
+
+          // from matic docs
+          const exitCallData = await maticPOSClient.exitERC721(
+            JSON.stringify(burnTx),
+            {
+              from: diamond.address,
+              encodeAbi: true,
+            }
+          )
+
+          // exit call data
+          await diamond.connect(borrowerSigner).exit(exitCallData)
         })
-        it('burns the NFTs then "deposits" to ethereum', async () => {})
-        it('stakes the NFTs on ethereum', async () => {})
+        it('stakes the NFTs on ethereum', async () => {
+          await diamond.connect(borrowerSigner).stakeNFTs(ownedNFTs)
+          const stakedNFTs = await diamond.getStakedNFTs(borrower)
+          for (let i = 0; i < ownedNFTs.length; i++) {
+            expect(ownedNFTs[i]).to.equal(stakedNFTs[i])
+          }
+        })
       })
     })
   }
