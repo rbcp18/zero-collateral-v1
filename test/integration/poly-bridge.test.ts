@@ -53,6 +53,10 @@ describe.only('Bridging Assets to Polygon', () => {
         rootChainManagerAbi.abi,
         borrowerSigner
       )
+      await claimNFT({ account: borrower, merkleIndex: 0 }, hre)
+      ownedNFTs = await rootToken
+        .getOwnedTokens(borrower)
+        .then((arr) => (arr.length > 2 ? arr.slice(0, 2) : arr))
     })
     describe('Calling mapped contracts', () => {
       it('approves spending of tokens', async () => {
@@ -86,10 +90,6 @@ describe.only('Bridging Assets to Polygon', () => {
     describe.only('Mock tests', () => {
       describe.only('stake, unstake, deposit to polygon', () => {
         it('stakes NFTs on behalf of the user', async () => {
-          await claimNFT({ account: borrower, merkleIndex: 0 }, hre)
-          ownedNFTs = await rootToken
-            .getOwnedTokens(borrower)
-            .then((arr) => (arr.length > 2 ? arr.slice(0, 2) : arr))
           await rootToken
             .connect(borrowerSigner)
             .setApprovalForAll(diamond.address, true)
@@ -122,8 +122,12 @@ describe.only('Bridging Assets to Polygon', () => {
           console.log(stakedNFTs)
         })
       })
-      describe('unstakes then "deposits" back to ethereum', () => {
-        it('unstakes NFTs on polygon', async () => {})
+      describe('burns the tokens then "deposits" back to ethereum', () => {
+        it('unstakes NFTs on polygon', async () => {
+          const burnTx = await childToken
+            .connect(deployer)
+            .withdrawBatch(ownedNFTs)
+        })
         it('burns the NFTs then "deposits" to ethereum', async () => {})
         it('stakes the NFTs on ethereum', async () => {})
       })

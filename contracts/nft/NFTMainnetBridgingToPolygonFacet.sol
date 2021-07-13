@@ -7,9 +7,7 @@ import { TellerNFT } from "./bridging/TellerNFT.sol";
 import { NFTLib } from "./libraries/NFTLib.sol";
 import { Address } from "@openzeppelin/contracts/utils/Address.sol";
 import { NFTStorageLib, NFTStorage } from "../storage/nft.sol";
-import {
-    EnumerableSet
-} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+import { EnumerableSet } from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "hardhat/console.sol";
 
 contract NFTMainnetBridgingToPolygonFacet {
@@ -31,8 +29,7 @@ contract NFTMainnetBridgingToPolygonFacet {
     }
 
     function bridgeNFTToPolygon(uint256[] memory tokenIds) external {
-        // Unstake the NFT
-        console.log("bridging");
+        // Unstake all the NFTs
         for (uint256 i; i < tokenIds.length; i++) {
             NFTLib.unstake(tokenIds[i]);
         }
@@ -44,17 +41,20 @@ contract NFTMainnetBridgingToPolygonFacet {
         virtual
     {
         // call the depositFor funciton at the rootChainManager
-        bytes memory encodedData =
-            abi.encodeWithSignature(
-                "depositFor(address,address,bytes)",
-                POLYGON_DIAMOND,
-                address(TELLER_NFT),
-                abi.encode(msg.sender, tokenIds)
-            );
+        bytes memory encodedData = abi.encodeWithSignature(
+            "depositFor(address,address,bytes)",
+            POLYGON_DIAMOND,
+            address(TELLER_NFT),
+            abi.encode(msg.sender, tokenIds)
+        );
         Address.functionCall(
             0xD4888faB8bd39A663B63161F5eE1Eae31a25B653,
             encodedData
         );
+    }
+
+    function initNFTBridge() external {
+        __initNFTBridge();
     }
 
     function __initNFTBridge() internal virtual {
