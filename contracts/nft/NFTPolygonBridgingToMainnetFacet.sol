@@ -12,11 +12,9 @@ import { EnumerableSet } from "@openzeppelin/contracts/utils/structs/EnumerableS
 contract NFTPolygonBridgingToMainnetFacet {
     // immutable and constant addresses
     address public immutable POLYGON_NFT;
-    address public immutable MAINNET_DIAMOND;
 
-    constructor(address polygonNFT, address mainnetDiamond) {
+    constructor(address polygonNFT) {
         POLYGON_NFT = polygonNFT;
-        MAINNET_DIAMOND = mainnetDiamond;
     }
 
     function bridgeNFTToMainnet(uint256[] memory tokenIds) external {
@@ -36,5 +34,20 @@ contract NFTPolygonBridgingToMainnetFacet {
             tokenIds
         );
         Address.functionCall(POLYGON_NFT, encodedData);
+    }
+
+    function exit(bytes memory exitCallData) external {
+        __exit(exitCallData);
+    }
+
+    function __exit(bytes memory exitCallData) internal virtual {
+        bytes memory encodedData = abi.encodeWithSignature(
+            "exit(bytes)",
+            exitCallData
+        );
+        Address.functionCall(
+            0xD4888faB8bd39A663B63161F5eE1Eae31a25B653,
+            encodedData
+        );
     }
 }

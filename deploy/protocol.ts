@@ -146,6 +146,11 @@ const deployProtocol: DeployFunction = async (hre) => {
       ],
       skipIfAlreadyDeployed: false,
     },
+    {
+      contract: 'MockNFTPolygonBridgingToMainnetFacet',
+      args: ['0x98ca52786e967d1469090adc075416948ca004a7'],
+      skipIfAlreadyDeployed: false,
+    },
   ]
 
   // Network specify Facets

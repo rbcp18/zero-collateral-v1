@@ -12,19 +12,15 @@ import "hardhat/console.sol";
 
 contract NFTMainnetBridgingToPolygonFacet {
     // immutable and constant addresses
-    address public immutable POLYGON_NFT;
+    address public immutable POLYGON_NFT_ADDRESS;
     address public immutable POLYGON_DIAMOND;
     address public constant ERC721_PREDICATE =
         0x74D83801586E9D3C4dc45FfCD30B54eA9C88cf9b;
     TellerNFT public constant TELLER_NFT =
         TellerNFT(0x2ceB85a2402C94305526ab108e7597a102D6C175);
 
-    function initNFTBridge() external {
-        __initNFTBridge();
-    }
-
     constructor(address polygonNFT, address polygonDiamond) {
-        POLYGON_NFT = polygonNFT;
+        POLYGON_NFT_ADDRESS = polygonNFT;
         POLYGON_DIAMOND = polygonDiamond;
     }
 
