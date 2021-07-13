@@ -92,4 +92,9 @@ contract NFTFacet is RolesMods {
     // create bridgeNFTToMainnet()
     //      call withdrawBatch function()
     //
+
+    // steps
+    // approval - automatic
+    // mockMainnetFacet -> bridgeNFTToPolygon(). called from tests
+    // polyTellerNFT -> deposit(). called from tests
 }
