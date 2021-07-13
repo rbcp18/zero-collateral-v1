@@ -81,6 +81,7 @@ contract PolyTellerNFT is TellerNFT {
         external
         onlyDepositor
     {
+        console.log("deposit");
         (address user, uint256[] memory tokenIds) =
             abi.decode(depositData, (address, uint256[]));
         // for tests

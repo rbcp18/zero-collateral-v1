@@ -10,6 +10,7 @@ import { NFTStorageLib, NFTStorage } from "../storage/nft.sol";
 import {
     EnumerableSet
 } from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+import "hardhat/console.sol";
 
 contract NFTMainnetBridgingToPolygonFacet {
     // immutable and constant addresses
@@ -20,17 +21,18 @@ contract NFTMainnetBridgingToPolygonFacet {
     TellerNFT public constant TELLER_NFT =
         TellerNFT(0x2ceB85a2402C94305526ab108e7597a102D6C175);
 
+    function initNFTBridge() external {
+        __initNFTBridge();
+    }
+
     constructor(address polygonNFT, address polygonDiamond) {
         POLYGON_NFT = polygonNFT;
         POLYGON_DIAMOND = polygonDiamond;
     }
 
-    function initNFTBridge() external {
-        __initNFTBridge();
-    }
-
     function bridgeNFTToPolygon(uint256[] memory tokenIds) external {
         // Unstake the NFT
+        console.log("bridging");
         for (uint256 i; i < tokenIds.length; i++) {
             NFTLib.unstake(tokenIds[i]);
         }
@@ -62,6 +64,7 @@ contract NFTMainnetBridgingToPolygonFacet {
     function stakeNFTsOnBehalfOfUser(uint256[] memory tokenIds, address user)
         external
     {
+        console.log("staking nfts on behalf of user");
         for (uint256 i; i < tokenIds.length; i++) {
             EnumerableSet.add(NFTLib.s().stakedNFTs[user], tokenIds[i]);
         }
