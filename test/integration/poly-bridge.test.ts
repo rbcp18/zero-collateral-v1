@@ -12,6 +12,7 @@ import hre, {
 } from 'hardhat'
 
 import { getMarkets, getNFT } from '../../config'
+import { nftMerkleTree } from '../../config/nft'
 import {
   claimNFT,
   getPlatformSetting,
@@ -113,55 +114,60 @@ describe.only('Bridging Assets to Polygon', () => {
           }
         })
         it('unstakes the nfts then "deposits" to polygon', async () => {
-          await diamond.connect(borrowerSigner).bridgeNFTToPolygon(ownedNFTs)
+          // bridge all of our nfts
+          await diamond.connect(borrowerSigner).bridgeAllNFTs()
+
+          // after unstaking our NFTs, it would make sense that the
+          // length of our staked NFTs is zero
           const stakedNFTs = await diamond.getStakedNFTs(borrower)
           expect(stakedNFTs.length).to.equal(0)
+
+          // we also expect that the diamonds now own all our unstakded NFTs
+          const ownedNFTs = await rootToken
+            .getOwnedTokens(diamond.address)
+            .then((arr) => (arr.length > 2 ? arr.slice(0, 2) : arr))
+          for (let i = 0; i < ownedNFTs.length; i++) {
+            expect(await rootToken.ownerOf(ownedNFTs[i])).to.equal(
+              diamond.address
+            )
+          }
         })
         it('stakes the NFTs on "polygon"', async () => {
           // encode data
-          const depositData = ethers.utils.defaultAbiCoder.encode(
-            ['address', 'uint256[]', 'uint256[]'],
-            [borrower, ownedNFTs, unstakedNFTs]
-          )
-
-          // stake the nfts and "send them to" root chain manager
-          await childToken
-            .connect(deployer)
-            .deposit(diamond.address, depositData)
-
-          const stakedNFTs = await diamond
-            .connect(borrower)
-            .getStakedNFTs(borrower)
-          for (let i = 0; i < ownedNFTs.length; i++) {
-            expect(ownedNFTs[i]).to.equal(stakedNFTs[i])
-          }
-        })
-      })
-      describe('burns the tokens then "deposits" back to ethereum', () => {
-        it('unstakes NFTs on polygon and burns them', async () => {
-          const burnTx = await childToken
-            .connect(borrowerSigner)
-            .withdrawBatch(ownedNFTs)
-
-          // from matic docs
-          const exitCallData = await maticPOSClient.exitERC721(
-            JSON.stringify(burnTx),
-            {
-              from: diamond.address,
-              encodeAbi: true,
-            }
-          )
-          // exit call data
-          await diamond.connect(borrowerSigner).exit(exitCallData)
-        })
-        it('stakes the NFTs on ethereum', async () => {
-          await diamond.connect(borrowerSigner).stakeNFTs(ownedNFTs)
           const stakedNFTs = await diamond.getStakedNFTs(borrower)
-          for (let i = 0; i < ownedNFTs.length; i++) {
-            expect(ownedNFTs[i]).to.equal(stakedNFTs[i])
-          }
+          const depositData = ethers.utils.defaultAbiCoder.encode(
+            ['uint256[]'],
+            [stakedNFTs]
+          )
+          // stake the nfts and "send them to" root chain manager
+          await childToken.connect(deployer).deposit(borrower, depositData)
         })
       })
+      // describe('burns the tokens then "deposits" back to ethereum', () => {
+      //   it('unstakes NFTs on polygon and burns them', async () => {
+      //     const burnTx = await childToken
+      //       .connect(borrowerSigner)
+      //       .withdrawBatch(ownedNFTs)
+
+      //     // from matic docs
+      //     const exitCallData = await maticPOSClient.exitERC721(
+      //       JSON.stringify(burnTx),
+      //       {
+      //         from: diamond.address,
+      //         encodeAbi: true,
+      //       }
+      //     )
+      //     // exit call data
+      //     await diamond.connect(borrowerSigner).exit(exitCallData)
+      //   })
+      //   it('stakes the NFTs on ethereum', async () => {
+      //     await diamond.connect(borrowerSigner).stakeNFTs(ownedNFTs)
+      //     const stakedNFTs = await diamond.getStakedNFTs(borrower)
+      //     for (let i = 0; i < ownedNFTs.length; i++) {
+      //       expect(ownedNFTs[i]).to.equal(stakedNFTs[i])
+      //     }
+      //   })
+      // })
     })
   }
 })

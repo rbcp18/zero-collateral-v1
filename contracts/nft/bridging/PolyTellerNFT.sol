@@ -8,8 +8,6 @@ import { ITellerDiamond } from "../../shared/interfaces/ITellerDiamond.sol";
 // Address utility
 import { Address } from "@openzeppelin/contracts/utils/Address.sol";
 import { MockNFTMainnetBridgingToPolygonFacet } from "../mock/MockNFTMainnetBridgingToPolygonFacet.sol";
-import { MockNFTPolygonBridgingToMainnetFacet } from "../mock/MockNFTPolygonBridgingToMainnetFacet.sol";
-
 import "hardhat/console.sol";
 
 contract PolyTellerNFT is TellerNFT {
@@ -23,12 +21,6 @@ contract PolyTellerNFT is TellerNFT {
 
     // Hash to the contract metadata located on the {_metadataBaseURI}
     string private _contractURIHash;
-
-    struct DepositData {
-        address user;
-        uint256[] stakedTokenIds;
-        uint256[] unstakedTokenIds;
-    }
 
     // only the depositor
     modifier onlyDepositor() {
@@ -79,27 +71,25 @@ contract PolyTellerNFT is TellerNFT {
      * @dev Should be callable only by ChildChainManager
      * Should handle deposit by minting the required tokenId for user
      * Make sure minting is done only by this function
-     * @param diamondAddress user address for whom deposit is being done
+     * @param user user address for whom deposit is being done
      * @param depositData abi encoded tokenId
      */
-    function deposit(address diamondAddress, bytes memory depositData)
+    function deposit(address user, bytes memory depositData)
         external
         onlyDepositor
     {
-        DepositData memory dd = abi.decode(depositData, (DepositData));
-
-        // minting tokens on the diamond
-        for (uint256 i; i < dd.stakedTokenIds.length; i++) {
-            _mint(diamondAddress, dd.stakedTokenIds[i]);
+        // deposit single
+        if (depositData.length == 32) {
+            uint256 tokenId = abi.decode(depositData, (uint256));
+            _mint(user, tokenId);
+            // deposit batch
+        } else {
+            uint256[] memory tokenIds = abi.decode(depositData, (uint256[]));
+            uint256 length = tokenIds.length;
+            for (uint256 i; i < length; i++) {
+                _mint(user, tokenIds[i]);
+            }
         }
-
-        // mint unstaked token ids
-        for (uint256 i; i < dd.unstakedTokenIds.length; i++) {
-            _mint(dd.user, dd.unstakedTokenIds[i]);
-        }
-
-        MockNFTMainnetBridgingToPolygonFacet(diamondAddress)
-            .stakeNFTsOnBehalfOfUser(dd.stakedTokenIds, dd.user);
     }
 
     /**
@@ -124,8 +114,6 @@ contract PolyTellerNFT is TellerNFT {
                 )
             );
             _burn(tokenId);
-            MockNFTPolygonBridgingToMainnetFacet(diamondAddress)
-                .bridgeNFTToMainnet(tokenIds);
         }
         emit WithdrawnBatch(_msgSender(), tokenIds);
     }

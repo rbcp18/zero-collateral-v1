@@ -13,44 +13,64 @@ import "hardhat/console.sol";
 contract NFTMainnetBridgingToPolygonFacet {
     // immutable and constant addresses
     address public immutable POLYGON_NFT_ADDRESS;
-    address public immutable POLYGON_DIAMOND;
     address public constant ERC721_PREDICATE =
         0x74D83801586E9D3C4dc45FfCD30B54eA9C88cf9b;
+    address public constant ROOT_CHAIN_MANAGER =
+        0xD4888faB8bd39A663B63161F5eE1Eae31a25B653;
     TellerNFT public constant TELLER_NFT =
         TellerNFT(0x2ceB85a2402C94305526ab108e7597a102D6C175);
 
-    // add rootchain manager address
-    struct DepositData {
-        address user;
-        uint256[] stakedTokenIds;
-        uint256[] unstakedTokenIds;
-    }
-
-    constructor(address polygonNFT, address polygonDiamond) {
+    constructor(address polygonNFT) {
         POLYGON_NFT_ADDRESS = polygonNFT;
-        POLYGON_DIAMOND = polygonDiamond;
     }
 
-    function __bridgePolygonDepositFor(DepositData memory depositData)
+    /**
+     * @dev calls the
+     */
+    function __bridgePolygonDepositFor(bytes memory tokenData, bool staked)
         internal
         virtual
     {
-        for (uint256 i; i < depositData.stakedTokenIds.length; i++) {
-            NFTLib.unstake(depositData.stakedTokenIds[i]);
+        bytes memory encodedData;
+        if (tokenData.length == 32) {
+            uint256 tokenId = abi.decode(tokenData, (uint256));
+            if (staked) {
+                NFTLib.unstake(tokenId);
+            } else {
+                NFTLib.nft().transferFrom(msg.sender, address(this), tokenId);
+            }
+            encodedData = abi.encodeWithSignature(
+                "depositFor(address,address,bytes)",
+                msg.sender,
+                address(TELLER_NFT),
+                abi.encode(tokenId)
+            );
+        } else {
+            uint256[] memory tokenIds = abi.decode(tokenData, (uint256[]));
+            if (staked) {
+                for (uint256 i; i < tokenIds.length; i++) {
+                    NFTLib.unstake(tokenIds[i]);
+                }
+            } else {
+                for (uint256 i; i < tokenIds.length; i++) {
+                    NFTLib.nft().transferFrom(
+                        msg.sender,
+                        address(this),
+                        tokenIds[i]
+                    );
+                }
+            }
+            // call the depositFor funciton at the rootChainManager
+            encodedData = abi.encodeWithSignature(
+                "depositFor(address,address,bytes)",
+                msg.sender,
+                address(TELLER_NFT),
+                abi.encode(tokenIds)
+            );
         }
-        // call the depositFor funciton at the rootChainManager
-        bytes memory encodedData = abi.encodeWithSignature(
-            "depositFor(address,address,bytes)",
-            POLYGON_DIAMOND,
-            address(TELLER_NFT),
-            abi.encode(depositData)
-        );
 
         // root chain manager
-        Address.functionCall(
-            0xD4888faB8bd39A663B63161F5eE1Eae31a25B653,
-            encodedData
-        );
+        Address.functionCall(ROOT_CHAIN_MANAGER, encodedData);
     }
 
     function initNFTBridge() external {
@@ -61,42 +81,31 @@ contract NFTMainnetBridgingToPolygonFacet {
         TELLER_NFT.setApprovalForAll(ERC721_PREDICATE, true);
     }
 
-    function stakeNFTsOnBehalfOfUser(uint256[] memory tokenIds, address user)
-        external
-    {
-        console.log("staking nfts on behalf of user");
-        for (uint256 i; i < tokenIds.length; i++) {
-            EnumerableSet.add(NFTLib.s().stakedNFTs[user], tokenIds[i]);
-        }
-    }
-
     function bridgeNFT(uint256 tokenId) external {
         bool isStaked = EnumerableSet.contains(
             NFTLib.s().stakedNFTs[msg.sender],
             tokenId
         );
-        DepositData memory dd;
-        dd.user = msg.sender;
         if (isStaked) {
-            dd.stakedTokenIds = new uint256[](tokenId);
-            dd.unstakedTokenIds = new uint256[](0);
+            NFTLib.unstake(tokenId);
+            __bridgePolygonDepositFor(abi.encode(tokenId), true);
         } else {
-            dd.stakedTokenIds = new uint256[](0);
-            dd.unstakedTokenIds = new uint256[](tokenId);
+            __bridgePolygonDepositFor(abi.encode(tokenId), false);
         }
-        __bridgePolygonDepositFor(dd);
     }
 
-    function bridgeAllNFTs(DepositData memory depositData) external {
-        for (uint256 i; i < depositData.stakedTokenIds.length; i++) {
-            NFTLib.unstake(depositData.stakedTokenIds[i]);
-        }
-        __bridgePolygonDepositFor(
-            DepositData(
-                msg.sender,
-                NFTLib.stakedNFTs(msg.sender),
-                TELLER_NFT.getOwnedTokens(msg.sender)
-            )
+    function bridgeAllNFTs() external {
+        console.log("briding nfts");
+        uint256[] memory stakedTokenIds = NFTLib.stakedNFTs(msg.sender);
+        uint256[] memory unstakedTokenIds = TELLER_NFT.getOwnedTokens(
+            msg.sender
         );
+        if (stakedTokenIds.length > 0) {
+            __bridgePolygonDepositFor(abi.encode(stakedTokenIds), true);
+        }
+
+        if (unstakedTokenIds.length > 0) {
+            __bridgePolygonDepositFor(abi.encode(unstakedTokenIds), false);
+        }
     }
 }
