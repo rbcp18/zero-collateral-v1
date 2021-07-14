@@ -4,28 +4,19 @@ pragma solidity ^0.8.0;
 // Contracts
 import { RolesMods } from "../contexts2/access-control/roles/RolesMods.sol";
 import { PausableMods } from "../settings/pausable/PausableMods.sol";
-import {
-    ReentryMods
-} from "../contexts2/access-control/reentry/ReentryMods.sol";
+import { ReentryMods } from "../contexts2/access-control/reentry/ReentryMods.sol";
 import { AUTHORIZED } from "../shared/roles.sol";
 import { LoanDataFacet } from "./LoanDataFacet.sol";
 import { EscrowClaimTokens } from "../escrow/EscrowClaimTokens.sol";
 
 // Libraries
-import {
-    IERC20,
-    SafeERC20
-} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {
-    EnumerableSet
-} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+import { IERC20, SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { EnumerableSet } from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import { LibLoans } from "./libraries/LibLoans.sol";
 import { LibCollateral } from "./libraries/LibCollateral.sol";
 import { LibDapps } from "../escrow/dapps/libraries/LibDapps.sol";
 import { LibEscrow } from "../escrow/libraries/LibEscrow.sol";
-import {
-    PlatformSettingsLib
-} from "../settings/platform/libraries/PlatformSettingsLib.sol";
+import { PlatformSettingsLib } from "../settings/platform/libraries/PlatformSettingsLib.sol";
 import { NumbersLib } from "../shared/libraries/NumbersLib.sol";
 import { PriceAggLib } from "../price-aggregator/PriceAggLib.sol";
 import { NFTLib } from "../nft/libraries/NFTLib.sol";
@@ -35,12 +26,7 @@ import { ITToken } from "../lending/ttoken/ITToken.sol";
 import { ILoansEscrow } from "../escrow/escrow/ILoansEscrow.sol";
 
 // Storage
-import {
-    MarketStorageLib,
-    MarketStorage,
-    Loan,
-    LoanStatus
-} from "../storage/market.sol";
+import { MarketStorageLib, MarketStorage, Loan, LoanStatus } from "../storage/market.sol";
 
 contract RepayFacet is RolesMods, ReentryMods, PausableMods, EscrowClaimTokens {
     /**
@@ -88,13 +74,16 @@ contract RepayFacet is RolesMods, ReentryMods, PausableMods, EscrowClaimTokens {
         authorized(AUTHORIZED, msg.sender)
         nonReentry("")
     {
-        uint256 balance =
-            LibEscrow.balanceOf(loanID, LibLoans.loan(loanID).lendingToken);
+        uint256 balance = LibEscrow.balanceOf(
+            loanID,
+            LibLoans.loan(loanID).lendingToken
+        );
         uint256 totalOwed = LibLoans.getTotalOwed(loanID);
         // if there isn't enough balance in the escrow, then transfer amount needed to the escrow
         if (balance < totalOwed && amount > balance) {
-            uint256 amountNeeded =
-                amount > totalOwed ? totalOwed - (balance) : amount - (balance);
+            uint256 amountNeeded = amount > totalOwed
+                ? totalOwed - (balance)
+                : amount - (balance);
 
             SafeERC20.safeTransferFrom(
                 IERC20(LibLoans.loan(loanID).lendingToken),
@@ -149,10 +138,9 @@ contract RepayFacet is RolesMods, ReentryMods, PausableMods, EscrowClaimTokens {
         }
 
         // Get the Teller token for the loan
-        ITToken tToken =
-            MarketStorageLib.store().tTokens[
-                LibLoans.loan(loanID).lendingToken
-            ];
+        ITToken tToken = MarketStorageLib.store().tTokens[
+            LibLoans.loan(loanID).lendingToken
+        ];
         // Transfer funds from an escrow if an escrow is calling it
         // Otherwise, transfer funds from an account
         if (address(LibEscrow.e(loanID)) == sender) {
@@ -249,13 +237,12 @@ contract RepayFacet is RolesMods, ReentryMods, PausableMods, EscrowClaimTokens {
         );
 
         // Calculate the reward before repaying the loan
-        (uint256 rewardInLending, uint256 collateralInLending) =
-            RepayLib.getLiquidationReward(loanID, collateralAmount);
+        (uint256 rewardInLending, uint256 collateralInLending) = RepayLib
+        .getLiquidationReward(loanID, collateralAmount);
 
         // The liquidator pays the amount still owed on the loan
-        uint256 amountToLiquidate =
-            LibLoans.debt(loanID).principalOwed +
-                LibLoans.debt(loanID).interestOwed;
+        uint256 amountToLiquidate = LibLoans.debt(loanID).principalOwed +
+            LibLoans.debt(loanID).interestOwed;
 
         __repayLoan(loanID, amountToLiquidate, msg.sender, true);
 
@@ -303,6 +290,8 @@ contract RepayFacet is RolesMods, ReentryMods, PausableMods, EscrowClaimTokens {
 }
 
 library RepayLib {
+    uint256 immutable SECONDS_PER_MONTH = 2592000;
+
     /**
      * @notice It checks if a loan can be liquidated.
      * @param loanID The loan ID to check.
@@ -321,11 +310,20 @@ library RepayLib {
 
         if (loan.collateralRatio > 0) {
             // If loan has a collateral ratio, check how much is needed
-            (, uint256 neededInCollateral, ) =
-                LoanDataFacet(address(this)).getCollateralNeededInfo(loanID);
+            (, uint256 neededInCollateral, ) = LoanDataFacet(address(this))
+            .getCollateralNeededInfo(loanID);
             if (neededInCollateral > collateralAmount) {
                 return true;
             }
+        }
+
+        //if the loan is from an NFT, an additional 30 days grace is given
+        if (
+            /*loan.type == NFT_TYPE &&*/
+            block.timestamp <
+            loan.loanStartTime + loan.duration + SECONDS_PER_MONTH
+        ) {
+            return false;
         }
 
         // Otherwise, check if the loan has expired
@@ -343,17 +341,15 @@ library RepayLib {
         view
         returns (uint256 reward_, uint256 collateralValue_)
     {
-        uint256 amountToLiquidate =
-            LibLoans.debt(loanID).principalOwed +
-                LibLoans.debt(loanID).interestOwed;
+        uint256 amountToLiquidate = LibLoans.debt(loanID).principalOwed +
+            LibLoans.debt(loanID).interestOwed;
 
         // Max reward is amount repaid on loan plus extra percentage
-        uint256 maxReward =
-            amountToLiquidate +
-                NumbersLib.percent(
-                    amountToLiquidate,
-                    uint16(PlatformSettingsLib.getLiquidateRewardPercent())
-                );
+        uint256 maxReward = amountToLiquidate +
+            NumbersLib.percent(
+                amountToLiquidate,
+                uint16(PlatformSettingsLib.getLiquidateRewardPercent())
+            );
 
         // Calculate available collateral for reward
         if (collateralAmount > 0) {
@@ -401,12 +397,11 @@ library RepayLib {
         // if the lending reward is less than the collateral lending tokens, then aggregate
         // the value for the lending token with the collateral token and send it to the liquidator
         if (rewardInLending <= collateralInLending) {
-            uint256 rewardInCollateral =
-                PriceAggLib.valueFor(
-                    LibLoans.loan(loanID).lendingToken,
-                    LibLoans.loan(loanID).collateralToken,
-                    rewardInLending
-                );
+            uint256 rewardInCollateral = PriceAggLib.valueFor(
+                LibLoans.loan(loanID).lendingToken,
+                LibLoans.loan(loanID).collateralToken,
+                rewardInLending
+            );
 
             LibCollateral.withdraw(loanID, rewardInCollateral, liquidator);
         } else {
@@ -433,8 +428,9 @@ library RepayLib {
         address recipient,
         uint256 value
     ) private {
-        EnumerableSet.AddressSet storage tokens =
-            MarketStorageLib.store().escrowTokens[loanID];
+        EnumerableSet.AddressSet storage tokens = MarketStorageLib
+        .store()
+        .escrowTokens[loanID];
         uint256 valueLeftToTransfer = value;
 
         // Start with the lending token
