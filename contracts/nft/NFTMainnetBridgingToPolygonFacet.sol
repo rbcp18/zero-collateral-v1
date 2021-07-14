@@ -25,7 +25,12 @@ contract NFTMainnetBridgingToPolygonFacet {
     }
 
     /**
-     * @dev calls the
+     * @notice it unstakes our staked tokens, or transfers our unstaked tokens to the diamond
+     * before making a call to the RootChainManager
+     * @dev makes a function call to `depositFor` on the RootChainManager, which speaks to the
+     * ChildChainManager, calling our PolyTellerNFT.
+     * @param tokenData the tokenData that's decoded and bridged
+     * @param staked are the tokens sent by the user staked?
      */
     function __bridgePolygonDepositFor(bytes memory tokenData, bool staked)
         internal
@@ -73,6 +78,9 @@ contract NFTMainnetBridgingToPolygonFacet {
         Address.functionCall(ROOT_CHAIN_MANAGER, encodedData);
     }
 
+    /**
+     * @notice it initializes our NFTBridge by approving all of our tokens from our ERC721_Predicate
+     */
     function initNFTBridge() external {
         __initNFTBridge();
     }
@@ -81,21 +89,27 @@ contract NFTMainnetBridgingToPolygonFacet {
         TELLER_NFT.setApprovalForAll(ERC721_PREDICATE, true);
     }
 
+    /**
+     * @notice checks if tokenId is stake or unstaked, then calls the bridge function with the
+     * encoded tokenId
+     * @param tokenId the tokenId to encode and send to the bridge function
+     */
     function bridgeNFT(uint256 tokenId) external {
         bool isStaked = EnumerableSet.contains(
             NFTLib.s().stakedNFTs[msg.sender],
             tokenId
         );
         if (isStaked) {
-            NFTLib.unstake(tokenId);
             __bridgePolygonDepositFor(abi.encode(tokenId), true);
         } else {
             __bridgePolygonDepositFor(abi.encode(tokenId), false);
         }
     }
 
+    /**
+     * @notice gets all of our NFTs (staked and unstaked) then sends them to be bridged
+     */
     function bridgeAllNFTs() external {
-        console.log("briding nfts");
         uint256[] memory stakedTokenIds = NFTLib.stakedNFTs(msg.sender);
         uint256[] memory unstakedTokenIds = TELLER_NFT.getOwnedTokens(
             msg.sender
