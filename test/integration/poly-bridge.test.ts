@@ -46,6 +46,7 @@ describe.only('Bridging Assets to Polygon', () => {
     let borrower: string
     let borrowerSigner: Signer
     let ownedNFTs: BigNumber[]
+    let unstakedNFTs: BigNumber[]
     let rootChainManager: Contract
     before(async () => {
       await hre.deployments.fixture(['market'], {
@@ -64,6 +65,9 @@ describe.only('Bridging Assets to Polygon', () => {
       )
       await claimNFT({ account: borrower, merkleIndex: 0 }, hre)
       ownedNFTs = await rootToken
+        .getOwnedTokens(borrower)
+        .then((arr) => (arr.length > 2 ? arr.slice(0, 2) : arr))
+      unstakedNFTs = await rootToken
         .getOwnedTokens(borrower)
         .then((arr) => (arr.length > 2 ? arr.slice(0, 2) : arr))
     })
@@ -109,8 +113,6 @@ describe.only('Bridging Assets to Polygon', () => {
           }
         })
         it('unstakes the nfts then "deposits" to polygon', async () => {
-          console.log('about to bridge')
-          console.log(ownedNFTs)
           await diamond.connect(borrowerSigner).bridgeNFTToPolygon(ownedNFTs)
           const stakedNFTs = await diamond.getStakedNFTs(borrower)
           expect(stakedNFTs.length).to.equal(0)
@@ -118,24 +120,27 @@ describe.only('Bridging Assets to Polygon', () => {
         it('stakes the NFTs on "polygon"', async () => {
           // encode data
           const depositData = ethers.utils.defaultAbiCoder.encode(
-            ['address', 'uint256[]'],
-            [borrower, ownedNFTs]
+            ['address', 'uint256[]', 'uint256[]'],
+            [borrower, ownedNFTs, unstakedNFTs]
           )
-          // stake the nfts
+
+          // stake the nfts and "send them to" root chain manager
           await childToken
             .connect(deployer)
             .deposit(diamond.address, depositData)
+
           const stakedNFTs = await diamond
             .connect(borrower)
             .getStakedNFTs(borrower)
-          console.log(stakedNFTs)
+          for (let i = 0; i < ownedNFTs.length; i++) {
+            expect(ownedNFTs[i]).to.equal(stakedNFTs[i])
+          }
         })
       })
       describe('burns the tokens then "deposits" back to ethereum', () => {
         it('unstakes NFTs on polygon and burns them', async () => {
-          console.log('about to burn coins')
           const burnTx = await childToken
-            .connect(borrower)
+            .connect(borrowerSigner)
             .withdrawBatch(ownedNFTs)
 
           // from matic docs
@@ -146,7 +151,6 @@ describe.only('Bridging Assets to Polygon', () => {
               encodeAbi: true,
             }
           )
-
           // exit call data
           await diamond.connect(borrowerSigner).exit(exitCallData)
         })

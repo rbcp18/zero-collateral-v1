@@ -1,4 +1,4 @@
-// SDPX-License-Identifier: MIT
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.3;
 
 // Contracts
@@ -19,30 +19,34 @@ contract NFTMainnetBridgingToPolygonFacet {
     TellerNFT public constant TELLER_NFT =
         TellerNFT(0x2ceB85a2402C94305526ab108e7597a102D6C175);
 
+    // add rootchain manager address
+    struct DepositData {
+        address user;
+        uint256[] stakedTokenIds;
+        uint256[] unstakedTokenIds;
+    }
+
     constructor(address polygonNFT, address polygonDiamond) {
         POLYGON_NFT_ADDRESS = polygonNFT;
         POLYGON_DIAMOND = polygonDiamond;
     }
 
-    function bridgeNFTToPolygon(uint256[] memory tokenIds) external {
-        // Unstake all the NFTs
-        for (uint256 i; i < tokenIds.length; i++) {
-            NFTLib.unstake(tokenIds[i]);
-        }
-        __bridgePolygonDepositFor(tokenIds);
-    }
-
-    function __bridgePolygonDepositFor(uint256[] memory tokenIds)
+    function __bridgePolygonDepositFor(DepositData memory depositData)
         internal
         virtual
     {
+        for (uint256 i; i < depositData.stakedTokenIds.length; i++) {
+            NFTLib.unstake(depositData.stakedTokenIds[i]);
+        }
         // call the depositFor funciton at the rootChainManager
         bytes memory encodedData = abi.encodeWithSignature(
             "depositFor(address,address,bytes)",
             POLYGON_DIAMOND,
             address(TELLER_NFT),
-            abi.encode(msg.sender, tokenIds)
+            abi.encode(depositData)
         );
+
+        // root chain manager
         Address.functionCall(
             0xD4888faB8bd39A663B63161F5eE1Eae31a25B653,
             encodedData
@@ -64,5 +68,35 @@ contract NFTMainnetBridgingToPolygonFacet {
         for (uint256 i; i < tokenIds.length; i++) {
             EnumerableSet.add(NFTLib.s().stakedNFTs[user], tokenIds[i]);
         }
+    }
+
+    function bridgeNFT(uint256 tokenId) external {
+        bool isStaked = EnumerableSet.contains(
+            NFTLib.s().stakedNFTs[msg.sender],
+            tokenId
+        );
+        DepositData memory dd;
+        dd.user = msg.sender;
+        if (isStaked) {
+            dd.stakedTokenIds = new uint256[](tokenId);
+            dd.unstakedTokenIds = new uint256[](0);
+        } else {
+            dd.stakedTokenIds = new uint256[](0);
+            dd.unstakedTokenIds = new uint256[](tokenId);
+        }
+        __bridgePolygonDepositFor(dd);
+    }
+
+    function bridgeAllNFTs(DepositData memory depositData) external {
+        for (uint256 i; i < depositData.stakedTokenIds.length; i++) {
+            NFTLib.unstake(depositData.stakedTokenIds[i]);
+        }
+        __bridgePolygonDepositFor(
+            DepositData(
+                msg.sender,
+                NFTLib.stakedNFTs(msg.sender),
+                TELLER_NFT.getOwnedTokens(msg.sender)
+            )
+        );
     }
 }

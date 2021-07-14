@@ -8,7 +8,6 @@ import { ITellerDiamond } from "../../shared/interfaces/ITellerDiamond.sol";
 // Address utility
 import { Address } from "@openzeppelin/contracts/utils/Address.sol";
 import { MockNFTMainnetBridgingToPolygonFacet } from "../mock/MockNFTMainnetBridgingToPolygonFacet.sol";
-
 import { MockNFTPolygonBridgingToMainnetFacet } from "../mock/MockNFTPolygonBridgingToMainnetFacet.sol";
 
 import "hardhat/console.sol";
@@ -24,6 +23,12 @@ contract PolyTellerNFT is TellerNFT {
 
     // Hash to the contract metadata located on the {_metadataBaseURI}
     string private _contractURIHash;
+
+    struct DepositData {
+        address user;
+        uint256[] stakedTokenIds;
+        uint256[] unstakedTokenIds;
+    }
 
     // only the depositor
     modifier onlyDepositor() {
@@ -77,18 +82,24 @@ contract PolyTellerNFT is TellerNFT {
      * @param diamondAddress user address for whom deposit is being done
      * @param depositData abi encoded tokenId
      */
-    function deposit(address diamondAddress, bytes calldata depositData)
+    function deposit(address diamondAddress, bytes memory depositData)
         external
         onlyDepositor
     {
-        console.log("deposit");
-        (address user, uint256[] memory tokenIds) = abi.decode(
-            depositData,
-            (address, uint256[])
-        );
-        // for tests
+        DepositData memory dd = abi.decode(depositData, (DepositData));
+
+        // minting tokens on the diamond
+        for (uint256 i; i < dd.stakedTokenIds.length; i++) {
+            _mint(diamondAddress, dd.stakedTokenIds[i]);
+        }
+
+        // mint unstaked token ids
+        for (uint256 i; i < dd.unstakedTokenIds.length; i++) {
+            _mint(dd.user, dd.unstakedTokenIds[i]);
+        }
+
         MockNFTMainnetBridgingToPolygonFacet(diamondAddress)
-            .stakeNFTsOnBehalfOfUser(tokenIds, user);
+            .stakeNFTsOnBehalfOfUser(dd.stakedTokenIds, dd.user);
     }
 
     /**
@@ -99,10 +110,6 @@ contract PolyTellerNFT is TellerNFT {
     function withdrawBatch(uint256[] calldata tokenIds) external {
         address diamondAddress = 0xc14D994fe7C5858c93936cc3bD42bb9467d6fB2C;
         // unstake first then withdraw
-        console.log("about to burn");
-        MockNFTPolygonBridgingToMainnetFacet(diamondAddress).bridgeNFTToMainnet(
-            tokenIds
-        );
         uint256 length = tokenIds.length;
         require(length <= BATCH_LIMIT, "ChildERC721: EXCEEDS_BATCH_LIMIT");
         for (uint256 i; i < length; i++) {
@@ -116,9 +123,9 @@ contract PolyTellerNFT is TellerNFT {
                     )
                 )
             );
-            console.log("burning");
             _burn(tokenId);
-            console.log("burned");
+            MockNFTPolygonBridgingToMainnetFacet(diamondAddress)
+                .bridgeNFTToMainnet(tokenIds);
         }
         emit WithdrawnBatch(_msgSender(), tokenIds);
     }
