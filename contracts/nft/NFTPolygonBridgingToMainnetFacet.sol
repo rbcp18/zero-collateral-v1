@@ -1,4 +1,4 @@
-// SDPX-License-Identifier: MIT
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.3;
 
 // Contracts
@@ -22,7 +22,7 @@ contract NFTPolygonBridgingToMainnetFacet {
         for (uint256 i; i < tokenIds.length; i++) {
             NFTLib.unstake(tokenIds[i]);
         }
-        // __withdrawTokensOnChild(tokenIds);
+        __withdrawTokensOnChild(tokenIds);
     }
 
     function __withdrawTokensOnChild(uint256[] memory tokenIds)
