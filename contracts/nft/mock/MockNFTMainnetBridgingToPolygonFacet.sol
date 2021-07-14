@@ -19,7 +19,7 @@ contract MockNFTMainnetBridgingToPolygonFacet is
      * @notice it doesn't call the rootchain manager. used for mock tests
      * @dev see __bridgePolygonDepositFor on NFTMainnetBridgingToPolygonFacet
      * @param tokenData the tokenData that's decoded and bridged
-     * @param staked whether the tokens the user is sending is staked or not
+     * @param staked are the tokens sent by the user staked?
      */
     function __bridgePolygonDepositFor(bytes memory tokenData, bool staked)
         internal
