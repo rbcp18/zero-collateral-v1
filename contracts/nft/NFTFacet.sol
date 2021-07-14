@@ -10,9 +10,7 @@ import "../nft/TellerNFTDictionary.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import { NFTLib } from "./libraries/NFTLib.sol";
 import { RolesLib } from "../contexts2/access-control/roles/RolesLib.sol";
-import {
-    EnumerableSet
-} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+import { EnumerableSet } from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
 contract NFTFacet is RolesMods {
     /**
@@ -55,6 +53,18 @@ contract NFTFacet is RolesMods {
         }
         // Give the caller authorization to protocol
         RolesLib.grantRole(AUTHORIZED, msg.sender);
+    }
+
+    /**
+     * @notice it unstakes our NFTs and removes them from our mapping
+     * @param nftIDs the nftIDs to unstake
+     */
+    function unstakeNFTs(uint256[] calldata nftIDs) external {
+        for (uint256 i; i < nftIDs.length; i++) {
+            // Unstake NFTs
+            NFTLib.unstake(nftIDs[i]);
+            NFTLib.nft().transferFrom(address(this), msg.sender, nftIDs[i]);
+        }
     }
 
     /**
