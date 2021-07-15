@@ -10,9 +10,7 @@ import { ADMIN, AUTHORIZED } from "../shared/roles.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import { NFTLib } from "./libraries/NFTLib.sol";
 import { RolesLib } from "../contexts2/access-control/roles/RolesLib.sol";
-import {
-    EnumerableSet
-} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+import { EnumerableSet } from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
 contract NFTFacet is RolesMods {
     /**
@@ -41,6 +39,19 @@ contract NFTFacet is RolesMods {
         loanNFTs = new uint256[](EnumerableSet.length(nfts));
         for (uint256 i; i < EnumerableSet.length(nfts); i++) {
             loanNFTs[i] = EnumerableSet.at(nfts, i);
+        }
+    }
+
+    /**
+     * @notice it unstakes the user's NFTs and transfers it from the diamond
+     * back to the user
+     * @param nftIDs the nftIDs to unstake
+     */
+    function unstakeNFTs(uint256[] calldata nftIDs) external {
+        for (uint256 i; i < nftIDs.length; i++) {
+            // Unstake NFTs
+            NFTLib.unstake(nftIDs[i]);
+            NFTLib.nft().transferFrom(address(this), msg.sender, nftIDs[i]);
         }
     }
 
