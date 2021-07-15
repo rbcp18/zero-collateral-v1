@@ -1,6 +1,10 @@
 import { DeployFunction } from 'hardhat-deploy/types'
 
-import { ITellerNFT, ITellerNFTDistributor } from '../types/typechain'
+import {
+  ITellerNFT,
+  ITellerNFTDistributor,
+  PolyTellerNFT,
+} from '../types/typechain'
 import { TellerNFTDictionary } from '../types/typechain'
 import {
   deploy,
@@ -21,6 +25,21 @@ const deployNFT: DeployFunction = async (hre) => {
   const nft = await deploy<ITellerNFT>({
     contract: 'TellerNFT',
     hre,
+  })
+
+  // address: 0x98Ca52786e967d1469090AdC075416948Ca004A7
+  await deploy<PolyTellerNFT>({
+    contract: 'PolyTellerNFT',
+    hre,
+    proxy: {
+      proxyContract: 'OpenZeppelinTransparentProxy',
+      execute: {
+        init: {
+          methodName: 'initialize',
+          args: [[await deployer.getAddress()]],
+        },
+      },
+    },
   })
 
   const nftDictionary = await deploy<TellerNFTDictionary>({

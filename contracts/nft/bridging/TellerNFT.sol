@@ -12,7 +12,7 @@ import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
 // Interfaces
-import "./ITellerNFT.sol";
+import "../ITellerNFT.sol";
 
 /*****************************************************************************************************/
 /**                                             WARNING                                             **/
@@ -248,6 +248,7 @@ contract TellerNFT is ITellerNFT, ERC721Upgradeable, AccessControlUpgradeable {
      */
     function initialize(address[] calldata minters)
         external
+        virtual
         override
         initializer
     {

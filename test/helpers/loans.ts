@@ -297,6 +297,8 @@ export const takeOutLoanWithNfts = async (
     .getOwnedTokens(borrower)
     .then((arr) => (arr.length > 2 ? arr.slice(0, 2) : arr))
 
+  console.log(ownedNFTs)
+
   // Set NFT approval
   await nft.connect(borrowerSigner).setApprovalForAll(diamond.address, true)
 

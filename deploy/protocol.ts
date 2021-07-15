@@ -144,6 +144,12 @@ const deployProtocol: DeployFunction = async (hre) => {
       contract: 'PoolTogetherFacet',
       skipIfAlreadyDeployed: false,
     },
+    {
+      contract: 'MockNFTMainnetBridgingToPolygonFacet',
+      // random addresses for testing. won't do anything
+      args: ['0x98ca52786e967d1469090adc075416948ca004a7'],
+      skipIfAlreadyDeployed: false,
+    },
   ]
 
   // Network specify Facets
@@ -191,6 +197,8 @@ const deployProtocol: DeployFunction = async (hre) => {
     execute,
   }
   const diamond = await deployDiamond<ITellerDiamond, any>(tellerDiamondArgs)
+  console.log('Diamond address *****')
+  console.log(diamond.address)
 
   await addAuthorizedAddresses(hre, diamond)
 }
