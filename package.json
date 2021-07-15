@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "@chainlink/contracts": "^0.1.6",
+    "@ensdomains/ens-contracts": "ensdomains/ens-contracts",
     "@maticnetwork/maticjs": "^2.0.43",
     "@maticnetwork/meta": "^2.4.16",
     "@nomiclabs/hardhat-ethers": "^2.0.1",
